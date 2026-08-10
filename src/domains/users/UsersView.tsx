@@ -1,0 +1,230 @@
+import { Camera, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ChangeEvent, FormEvent, useState } from "react";
+import { roles } from "./rules";
+import { User, UserDraft, UserRole } from "./types";
+
+function initials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (!parts.length) return "?";
+  const first = parts[0][0] ?? "";
+  const last = parts.length > 1 ? parts[parts.length - 1][0] ?? "" : "";
+  return (first + last).toUpperCase();
+}
+
+function Avatar(props: { name: string; avatarUrl: string | null; size: number }) {
+  if (props.avatarUrl) {
+    return (
+      <img
+        src={props.avatarUrl}
+        alt={props.name}
+        className="avatar-image"
+        style={{ width: props.size, height: props.size }}
+      />
+    );
+  }
+  return (
+    <span className="avatar-fallback" style={{ width: props.size, height: props.size }}>
+      {initials(props.name)}
+    </span>
+  );
+}
+
+export function UsersView(props: {
+  users: User[];
+  userForm: UserDraft;
+  confirmPassword: string;
+  isPasswordVisible: boolean;
+  userMessage: string;
+  onUserFormChange: (form: UserDraft) => void;
+  onConfirmPasswordChange: (value: string) => void;
+  onTogglePasswordVisible: () => void;
+  onSubmit: (event: FormEvent<HTMLFormElement>) => void;
+  onEditUser: (user: User) => void;
+  onToggleUserActive: (user: User) => void;
+  onCancelEdit: () => void;
+  onUploadAvatar: (userId: string, file: File) => Promise<void>;
+}) {
+  const {
+    users,
+    userForm,
+    confirmPassword,
+    isPasswordVisible,
+    userMessage,
+    onUserFormChange,
+    onConfirmPasswordChange,
+    onTogglePasswordVisible,
+    onSubmit,
+    onEditUser,
+    onToggleUserActive,
+    onCancelEdit,
+    onUploadAvatar,
+  } = props;
+
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
+  const editingUser = userForm.id ? users.find((account) => account.id === userForm.id) : undefined;
+
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file || !userForm.id) return;
+    setAvatarError("");
+    setIsUploadingAvatar(true);
+    try {
+      await onUploadAvatar(userForm.id, file);
+    } catch (error) {
+      setAvatarError(error instanceof Error ? error.message : "Não foi possível enviar a imagem.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }
+
+  return (
+    <section className="users-layout">
+      <div className="panel">
+        <div className="panel-heading">
+          <h2>Contas de login</h2>
+          <span>{users.length} conta(s)</span>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((account) => (
+                <tr key={account.id}>
+                  <td>
+                    <div className="row-identity">
+                      <Avatar name={account.name} avatarUrl={account.avatarUrl} size={30} />
+                      <strong>{account.name}</strong>
+                    </div>
+                  </td>
+                  <td>{account.email}</td>
+                  <td><span className="badge role-badge">{account.role}</span></td>
+                  <td>
+                    <span className={`badge ${account.active ? "account-active" : "account-inactive"}`}>
+                      {account.active ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="row-actions">
+                      <button type="button" onClick={() => onEditUser(account)}>Editar</button>
+                      <button type="button" onClick={() => onToggleUserActive(account)}>
+                        {account.active ? "Desativar" : "Ativar"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <form className="panel user-form" onSubmit={onSubmit}>
+        <div className="panel-heading">
+          <h2>{userForm.id ? "Editar conta" : "Nova conta"}</h2>
+          <span>Login e perfil de acesso</span>
+        </div>
+        {userForm.id && (
+          <div className="avatar-upload">
+            <span className="avatar-upload-preview">
+              <Avatar name={userForm.name} avatarUrl={editingUser?.avatarUrl ?? null} size={72} />
+              <label className="avatar-upload-trigger" aria-label="Alterar foto do usuário">
+                <Camera size={14} />
+                <input type="file" accept="image/png,image/jpeg,image/webp" onChange={handleAvatarChange} disabled={isUploadingAvatar} />
+              </label>
+            </span>
+            <div>
+              <p className="avatar-upload-hint">{isUploadingAvatar ? "Enviando…" : "PNG, JPEG ou WEBP até 2 MB."}</p>
+              {avatarError && <p className="form-error">{avatarError}</p>}
+            </div>
+          </div>
+        )}
+        <label>
+          Nome
+          <input value={userForm.name} onChange={(event) => onUserFormChange({ ...userForm, name: event.target.value })} required />
+        </label>
+        <label>
+          E-mail
+          <input
+            type="email"
+            value={userForm.email}
+            onChange={(event) => onUserFormChange({ ...userForm, email: event.target.value })}
+            required
+          />
+        </label>
+        <div className="field-block">
+          <label htmlFor="account-password">Senha</label>
+          <span className="password-field">
+            <button
+              type="button"
+              aria-label={isPasswordVisible ? "Ocultar confirmação de senha" : "Visualizar confirmação de senha"}
+              onClick={onTogglePasswordVisible}
+            >
+              {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+            <input
+              id="account-password"
+              type={isPasswordVisible ? "text" : "password"}
+              value={userForm.password}
+              onChange={(event) => onUserFormChange({ ...userForm, password: event.target.value })}
+              required
+            />
+          </span>
+        </div>
+        <div className="field-block">
+          <label htmlFor="account-password-confirmation">Confirmar senha</label>
+          <span className="password-field">
+            <button
+              type="button"
+              aria-label={isPasswordVisible ? "Ocultar senha" : "Visualizar senha"}
+              onClick={onTogglePasswordVisible}
+            >
+              {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+            </button>
+            <input
+              id="account-password-confirmation"
+              type={isPasswordVisible ? "text" : "password"}
+              value={confirmPassword}
+              onChange={(event) => onConfirmPasswordChange(event.target.value)}
+              required
+            />
+          </span>
+        </div>
+        <label>
+          Perfil
+          <select value={userForm.role} onChange={(event) => onUserFormChange({ ...userForm, role: event.target.value as UserRole })}>
+            {roles.map((role) => (
+              <option key={role}>{role}</option>
+            ))}
+          </select>
+        </label>
+        <label className="checkbox-label">
+          <input
+            type="checkbox"
+            checked={userForm.active}
+            onChange={(event) => onUserFormChange({ ...userForm, active: event.target.checked })}
+          />
+          Conta ativa
+        </label>
+        {userMessage && <p className="form-note">{userMessage}</p>}
+        <div className="form-actions">
+          <button className="primary-action" type="submit"><ShieldCheck size={18} /> Salvar conta</button>
+          {userForm.id && (
+            <button className="secondary-action" type="button" onClick={onCancelEdit}>
+              Cancelar edição
+            </button>
+          )}
+        </div>
+      </form>
+    </section>
+  );
+}

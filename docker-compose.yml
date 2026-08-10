@@ -1,0 +1,27 @@
+# Postgres do grafica, usado pelo backend real em backend/ (ver docs/SPEC.md §3.2).
+# Volume nomeado (postgres_data) guarda os arquivos reais do banco fora
+# desta pasta, gerenciado pelo próprio Docker — só os scripts de
+# inicialização ficam versionados aqui, em ./data.
+
+services:
+  postgres:
+    image: postgres:16
+    container_name: grafica_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: grafica
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env, nunca hardcode}
+    volumes:
+      - ./data:/docker-entrypoint-initdb.d:ro
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5435:5432" # 5432/5433/5434 já usados por outros projetos neste host
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U app -d grafica"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  postgres_data:
