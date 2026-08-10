@@ -85,3 +85,15 @@ Diferente de `npm run dev`, aqui é o bundle de produção real (`dist/`), não 
 - **Backend:** `backend/app/` (FastAPI + SQLAlchemy async + Alembic), um módulo por domínio (`db/models/`, `schemas/`, `api/routes/`), mesma intenção de isolamento do frontend.
 - `src/domains/<domain>/repository.ts` fala com a API via `src/lib/apiClient.ts` (fetch + JWT Bearer) — regras de negócio (`rules.ts`) e componentes de apresentação (`<Domain>View.tsx`) não sabem que existe uma API por trás.
 - Documentação completa em [`docs/SPEC.md`](docs/SPEC.md).
+
+## Resumo do que foi aplicado
+
+- Migração da UI de MVP em `localStorage` para persistência real em Postgres, com backend próprio (Python/FastAPI) e autenticação JWT.
+- Frontend reorganizado por domínio (`requests`, `units`, `users`, `reports`, `audit`), espelhando a separação de módulos do backend.
+- Tela de login e sidebar/menu de conta em Tailwind CSS (padrão hand-rolled "estilo shadcn"); as demais telas de conteúdo permanecem em CSS puro, exceto a tela de Solicitações, que também usa Tailwind nos ícones de ação, no formulário em tela cheia e no modal de confirmação de exclusão.
+- Tela de Solicitações dividida em consulta (lista) e edição/inclusão (formulário em tela cheia), com ações de editar/excluir por linha.
+- Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático agendado após 60 dias de retenção.
+- Upload de foto de perfil para usuários, armazenado em disco no backend.
+- Permissões por perfil (Administrador/Operador/Consulta) aplicadas tanto no frontend quanto no backend.
+
+Histórico de decisões, trade-offs e o estado atual de cada seção está em [`docs/SPEC.md`](docs/SPEC.md).
