@@ -1,6 +1,26 @@
 # Duplica
 
-Sistema web para controle de cópias da SEMED: dashboard, gestão de solicitações, cadastro de escolas/setores, histórico de status, ranking de unidades e consolidação mensal. Frontend em React/TypeScript, backend real em Python/FastAPI + Postgres (ver `docs/SPEC.md` §3.2 para a decisão de stack).
+![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-Python-009688?logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+
+Sistema web de controle de cópias/impressões para a SEMED: solicitações originadas por escolas ou pela Sede, produção, entrega, histórico de status, ranking de unidades, consolidação mensal e trilha de auditoria. Frontend em React/TypeScript, backend real em Python/FastAPI + Postgres (ver `docs/SPEC.md` §3.2 para a decisão de stack).
+
+## Funcionalidades
+
+- Login com perfis Administrador, Operador e Consulta — autenticação JWT contra o Postgres (senha com hash bcrypt), permissões aplicadas tanto no frontend quanto no backend.
+- Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues e consumo estimado de papel.
+- Solicitações: tela de consulta separada da tela de edição/inclusão, com cálculo automático de faces impressas/folhas consumidas e código único (`CP-2026-0001`) gerados no backend, filtros, busca, histórico de status e confirmação de exclusão via modal.
+- Cadastro de unidades escolares e setores.
+- Cadastro de usuários com upload de foto de perfil.
+- Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático após 60 dias.
+- Relatórios: ranking de unidades por volume e consolidação mensal.
+
+## Stack
+
+- **Frontend:** React 19 + Vite 6 + TypeScript (strict), organizado por domínio (`src/domains/<domain>/`), Tailwind CSS na "casca" da aplicação (login/sidebar) e na tela de Solicitações, CSS global nas demais telas de conteúdo.
+- **Backend:** Python/FastAPI + SQLAlchemy 2.0 async + Alembic + PostgreSQL, JWT Bearer + bcrypt, rate limiting no login, expurgo automático do log de auditoria via APScheduler.
 
 ## Como executar
 
@@ -47,7 +67,7 @@ npm run build
 npm run preview   # serve dist/ em http://127.0.0.1:4174/
 ```
 
-Porta fixa `4174` (a porta padrão do Vite, 4173, já é usada por outro projeto neste host). Diferente de `npm run dev`, aqui é o bundle de produção real (`dist/`), não o servidor de desenvolvimento — evita o problema de aba do navegador presa numa versão antiga por reconexão de HMR. Requer o backend (porta `8010`) e o Postgres (porta `5435`) no ar.
+Diferente de `npm run dev`, aqui é o bundle de produção real (`dist/`), não o servidor de desenvolvimento. Requer o backend (porta `8010`) e o Postgres (porta `5435`) no ar.
 
 ## Credenciais de demonstração
 
@@ -56,20 +76,12 @@ Porta fixa `4174` (a porta padrão do Vite, 4173, já é usada por outro projeto
 | Administrador | `admin@grafica.local` | `admin123` |
 | Operador | `operador@grafica.local` | `operador123` |
 | Consulta | `consulta@grafica.local` | `consulta123` |
-| Administrador (TI SEMED) | `ti.semed@novaiguacu.rj.gov.br` | `semed123` |
 
-## Escopo
-
-- Login com perfis Administrador, Operador e Consulta, autenticação JWT contra o Postgres (senha com hash bcrypt).
-- Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues e consumo estimado de papel.
-- Cadastro e gestão de solicitações com origem Escola ou Sede SEMED.
-- Cálculo automático de faces impressas e folhas consumidas (no backend).
-- Código único no padrão `CP-2026-0001` (gerado no backend).
-- Filtros, busca, histórico de status, ranking de unidades e consolidação mensal.
-- Cadastro de unidades escolares e setores.
+> Dados de seed (`backend/app/db/seed.py`) para ambiente local/demonstração — troque as senhas antes de qualquer uso real.
 
 ## Arquitetura
 
 - **Frontend:** `src/domains/<domain>/` (types/rules/repository/View por domínio) + `src/shell/` (login, sidebar/topbar, tema) — ver `docs/SPEC.md` §3.6.
 - **Backend:** `backend/app/` (FastAPI + SQLAlchemy async + Alembic), um módulo por domínio (`db/models/`, `schemas/`, `api/routes/`), mesma intenção de isolamento do frontend.
 - `src/domains/<domain>/repository.ts` fala com a API via `src/lib/apiClient.ts` (fetch + JWT Bearer) — regras de negócio (`rules.ts`) e componentes de apresentação (`<Domain>View.tsx`) não sabem que existe uma API por trás.
+- Documentação completa em [`docs/SPEC.md`](docs/SPEC.md).
