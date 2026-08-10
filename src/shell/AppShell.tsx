@@ -16,7 +16,6 @@ import { CopyRequest, RequestDraft, RequestStatus } from "../domains/requests/ty
 import { RequestsView } from "../domains/requests/RequestsView";
 import { buildDashboardMetrics, getMonthlyConsolidation, getUnitRanking } from "../domains/reports/rules";
 import { DashboardView } from "../domains/reports/DashboardView";
-import { ReportsView } from "../domains/reports/ReportsView";
 import { createAuditRepository } from "../domains/audit/repository";
 import { AuditLogEntry } from "../domains/audit/types";
 import { AuditView } from "../domains/audit/AuditView";
@@ -74,6 +73,7 @@ export function AppShell() {
     origin: "Escola",
   });
   const [userForm, setUserForm] = useState<UserDraft>(emptyUserDraft);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isAccountPasswordVisible, setIsAccountPasswordVisible] = useState(false);
   const [userMessage, setUserMessage] = useState("");
@@ -246,13 +246,24 @@ export function AppShell() {
       setUserForm(emptyUserDraft);
       setConfirmPassword("");
       setIsAccountPasswordVisible(false);
+      setIsCreatingUser(false);
       setUserMessage(`Conta de ${saved.name} salva.`);
     } catch (error) {
       setUserMessage(error instanceof Error ? error.message : "Não foi possível salvar a conta.");
     }
   }
 
+  function handleStartCreateUser() {
+    if (!user || !canPerform(user.role, "manageUsers")) return;
+    setUserForm(emptyUserDraft);
+    setConfirmPassword("");
+    setIsAccountPasswordVisible(false);
+    setUserMessage("");
+    setIsCreatingUser(true);
+  }
+
   function handleEditUser(selected: User) {
+    setIsCreatingUser(false);
     setUserForm({
       id: selected.id,
       name: selected.name,
@@ -290,6 +301,7 @@ export function AppShell() {
     setUserForm(emptyUserDraft);
     setConfirmPassword("");
     setIsAccountPasswordVisible(false);
+    setIsCreatingUser(false);
     setUserMessage("");
   }
 
@@ -322,7 +334,7 @@ export function AppShell() {
         <header className="topbar">
           <div>
             <p className="eyebrow">Sistema de controle de cópias</p>
-            <h1>{activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Unidades e setores" : activeView === "users" ? "Usuários e perfis" : activeView === "audit" ? "Auditoria" : "Consolidação"}</h1>
+            <h1>{activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Unidades e setores" : activeView === "users" ? "Usuários e perfis" : "Auditoria"}</h1>
           </div>
         </header>
 
@@ -336,6 +348,8 @@ export function AppShell() {
               <DashboardView
                 metrics={metrics}
                 ranking={ranking}
+                monthly={monthly}
+                fullRanking={fullRanking}
                 recentRequests={snapshot.requests.slice(0, 5)}
                 onSelectRequest={(id) => {
                   setSelectedRequestId(id);
@@ -392,9 +406,11 @@ export function AppShell() {
                 confirmPassword={confirmPassword}
                 isPasswordVisible={isAccountPasswordVisible}
                 userMessage={userMessage}
+                mode={isCreatingUser || userForm.id ? "form" : "list"}
                 onUserFormChange={setUserForm}
                 onConfirmPasswordChange={setConfirmPassword}
                 onTogglePasswordVisible={() => setIsAccountPasswordVisible((current) => !current)}
+                onStartCreate={handleStartCreateUser}
                 onSubmit={handleSaveUser}
                 onEditUser={handleEditUser}
                 onToggleUserActive={handleToggleUserActive}
@@ -402,8 +418,6 @@ export function AppShell() {
                 onUploadAvatar={handleUploadAvatar}
               />
             )}
-
-            {activeView === "reports" && <ReportsView monthly={monthly} ranking={fullRanking} />}
 
             {activeView === "audit" && canPerform(user.role, "manageAudit") && (
               <AuditView entries={auditEntries} canClear={canPerform(user.role, "manageAudit")} onClear={handleClearAudit} />

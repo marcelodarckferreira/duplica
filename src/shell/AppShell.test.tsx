@@ -45,6 +45,7 @@ describe("AppShell user menu", () => {
 
     await login(user);
     await user.click(await screen.findByRole("button", { name: "Usuários" }));
+    await user.click(await screen.findByRole("button", { name: "Nova conta" }));
 
     const password = await screen.findByLabelText("Senha");
     const confirmation = screen.getByLabelText("Confirmar senha");
@@ -68,6 +69,7 @@ describe("AppShell user menu", () => {
 
     await login(user);
     await user.click(await screen.findByRole("button", { name: "Usuários" }));
+    await user.click(await screen.findByRole("button", { name: "Nova conta" }));
 
     const password = await screen.findByLabelText("Senha");
     const confirmation = screen.getByLabelText("Confirmar senha");

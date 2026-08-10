@@ -1,4 +1,4 @@
-import { Camera, Eye, EyeOff, ShieldCheck } from "lucide-react";
+import { ArrowLeft, Camera, Eye, EyeOff, Pencil, Plus, ShieldCheck, UserCheck, UserX } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { roles } from "./rules";
 import { User, UserDraft, UserRole } from "./types";
@@ -35,9 +35,11 @@ export function UsersView(props: {
   confirmPassword: string;
   isPasswordVisible: boolean;
   userMessage: string;
+  mode: "list" | "form";
   onUserFormChange: (form: UserDraft) => void;
   onConfirmPasswordChange: (value: string) => void;
   onTogglePasswordVisible: () => void;
+  onStartCreate: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onEditUser: (user: User) => void;
   onToggleUserActive: (user: User) => void;
@@ -50,9 +52,11 @@ export function UsersView(props: {
     confirmPassword,
     isPasswordVisible,
     userMessage,
+    mode,
     onUserFormChange,
     onConfirmPasswordChange,
     onTogglePasswordVisible,
+    onStartCreate,
     onSubmit,
     onEditUser,
     onToggleUserActive,
@@ -79,58 +83,16 @@ export function UsersView(props: {
     }
   }
 
-  return (
-    <section className="users-layout">
-      <div className="panel">
-        <div className="panel-heading">
-          <h2>Contas de login</h2>
-          <span>{users.length} conta(s)</span>
-        </div>
-        <div className="table-wrap">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Nome</th>
-                <th>E-mail</th>
-                <th>Perfil</th>
-                <th>Status</th>
-                <th>Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {users.map((account) => (
-                <tr key={account.id}>
-                  <td>
-                    <div className="row-identity">
-                      <Avatar name={account.name} avatarUrl={account.avatarUrl} size={30} />
-                      <strong>{account.name}</strong>
-                    </div>
-                  </td>
-                  <td>{account.email}</td>
-                  <td><span className="badge role-badge">{account.role}</span></td>
-                  <td>
-                    <span className={`badge ${account.active ? "account-active" : "account-inactive"}`}>
-                      {account.active ? "Ativo" : "Inativo"}
-                    </span>
-                  </td>
-                  <td>
-                    <div className="row-actions">
-                      <button type="button" onClick={() => onEditUser(account)}>Editar</button>
-                      <button type="button" onClick={() => onToggleUserActive(account)}>
-                        {account.active ? "Desativar" : "Ativar"}
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
+  if (mode === "form") {
+    return (
       <form className="panel user-form" onSubmit={onSubmit}>
         <div className="panel-heading">
-          <h2>{userForm.id ? "Editar conta" : "Nova conta"}</h2>
+          <div className="heading-with-back">
+            <button type="button" className="icon-back-button" onClick={onCancelEdit} aria-label="Voltar para a lista">
+              <ArrowLeft size={18} />
+            </button>
+            <h2>{userForm.id ? "Editar conta" : "Nova conta"}</h2>
+          </div>
           <span>Login e perfil de acesso</span>
         </div>
         {userForm.id && (
@@ -218,13 +180,80 @@ export function UsersView(props: {
         {userMessage && <p className="form-note">{userMessage}</p>}
         <div className="form-actions">
           <button className="primary-action" type="submit"><ShieldCheck size={18} /> Salvar conta</button>
-          {userForm.id && (
-            <button className="secondary-action" type="button" onClick={onCancelEdit}>
-              Cancelar edição
-            </button>
-          )}
+          <button className="secondary-action" type="button" onClick={onCancelEdit}>
+            Cancelar
+          </button>
         </div>
       </form>
+    );
+  }
+
+  return (
+    <section className="users-layout-single">
+      <div className="panel">
+        <div className="panel-heading">
+          <h2>Contas de login</h2>
+          <div className="heading-actions">
+            <span>{users.length} conta(s)</span>
+            <button type="button" className="primary-action" onClick={onStartCreate}>
+              <Plus size={17} /> Nova conta
+            </button>
+          </div>
+        </div>
+        {userMessage && <p className="form-note">{userMessage}</p>}
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Nome</th>
+                <th>E-mail</th>
+                <th>Perfil</th>
+                <th>Status</th>
+                <th aria-label="Ações" />
+              </tr>
+            </thead>
+            <tbody>
+              {users.map((account) => (
+                <tr key={account.id}>
+                  <td>
+                    <div className="row-identity">
+                      <Avatar name={account.name} avatarUrl={account.avatarUrl} size={30} />
+                      <strong>{account.name}</strong>
+                    </div>
+                  </td>
+                  <td>{account.email}</td>
+                  <td><span className="badge role-badge">{account.role}</span></td>
+                  <td>
+                    <span className={`badge ${account.active ? "account-active" : "account-inactive"}`}>
+                      {account.active ? "Ativo" : "Inativo"}
+                    </span>
+                  </td>
+                  <td>
+                    <div className="row-icon-actions">
+                      <button
+                        type="button"
+                        className="icon-row-button"
+                        aria-label={`Editar ${account.name}`}
+                        onClick={() => onEditUser(account)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="icon-row-button icon-row-button-danger"
+                        aria-label={account.active ? `Desativar ${account.name}` : `Ativar ${account.name}`}
+                        onClick={() => onToggleUserActive(account)}
+                      >
+                        {account.active ? <UserX size={15} /> : <UserCheck size={15} />}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </section>
   );
 }

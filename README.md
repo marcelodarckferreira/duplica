@@ -10,12 +10,12 @@ Sistema web de controle de cópias/impressões para a SEMED: solicitações orig
 ## Funcionalidades
 
 - Login com perfis Administrador, Operador e Consulta — autenticação JWT contra o Postgres (senha com hash bcrypt), permissões aplicadas tanto no frontend quanto no backend.
-- Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues e consumo estimado de papel.
+- Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues, consumo estimado de papel, ranking de unidades e consolidação mensal — tudo numa única tela.
 - Solicitações: tela de consulta separada da tela de edição/inclusão, com cálculo automático de faces impressas/folhas consumidas e código único (`CP-2026-0001`) gerados no backend, filtros, busca, histórico de status e confirmação de exclusão via modal.
 - Cadastro de unidades escolares e setores.
-- Cadastro de usuários com upload de foto de perfil.
+- Cadastro de usuários com upload de foto de perfil, também em tela de consulta separada da tela de edição/inclusão.
 - Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático após 60 dias.
-- Relatórios: ranking de unidades por volume e consolidação mensal.
+- Navegação em tela única por regra de negócio (consulta nunca ao lado do formulário de inclusão/edição) e sidebar agrupada por seção — mesmo padrão usado no ForgeHub.
 
 ## Stack
 

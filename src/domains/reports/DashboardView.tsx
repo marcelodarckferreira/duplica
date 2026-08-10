@@ -3,7 +3,7 @@ import { ReactNode } from "react";
 import { RequestTable } from "../requests/RequestsView";
 import { CopyRequest } from "../requests/types";
 import { formatNumber } from "../requests/rules";
-import { buildDashboardMetrics, getUnitRanking } from "./rules";
+import { buildDashboardMetrics, getMonthlyConsolidation, getUnitRanking } from "./rules";
 
 function Metric(props: { icon: ReactNode; label: string; value: string }) {
   return (
@@ -18,10 +18,12 @@ function Metric(props: { icon: ReactNode; label: string; value: string }) {
 export function DashboardView(props: {
   metrics: ReturnType<typeof buildDashboardMetrics>;
   ranking: ReturnType<typeof getUnitRanking>;
+  monthly: ReturnType<typeof getMonthlyConsolidation>;
+  fullRanking: ReturnType<typeof getUnitRanking>;
   recentRequests: CopyRequest[];
   onSelectRequest: (id: string) => void;
 }) {
-  const { metrics, ranking, recentRequests, onSelectRequest } = props;
+  const { metrics, ranking, monthly, fullRanking, recentRequests, onSelectRequest } = props;
 
   return (
     <>
@@ -56,6 +58,43 @@ export function DashboardView(props: {
             <span>Movimento recente</span>
           </div>
           <RequestTable requests={recentRequests} compact onSelect={onSelectRequest} />
+        </div>
+      </section>
+
+      <section className="dashboard-layout">
+        <div className="panel">
+          <div className="panel-heading">
+            <h2>Consolidação mensal</h2>
+            <span>Solicitações, faces e folhas</span>
+          </div>
+          <table className="data-table">
+            <thead><tr><th>Mês</th><th>Solicitações</th><th>Faces</th><th>Folhas</th></tr></thead>
+            <tbody>
+              {monthly.map((item) => (
+                <tr key={item.month}>
+                  <td>{item.month}</td>
+                  <td>{formatNumber(item.requests)}</td>
+                  <td>{formatNumber(item.printedFaces)}</td>
+                  <td>{formatNumber(item.consumedSheets)}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <div className="panel">
+          <div className="panel-heading">
+            <h2>Uso por unidade</h2>
+            <span>Ranking geral</span>
+          </div>
+          <div className="ranking-list">
+            {fullRanking.map((item, index) => (
+              <div className="ranking-row" key={item.unitId}>
+                <span>{index + 1}</span>
+                <strong>{item.unitName}</strong>
+                <em>{formatNumber(item.requests)} solicitação(ões)</em>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
     </>

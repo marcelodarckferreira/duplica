@@ -54,13 +54,12 @@ Tela de entrada única (`src/shell/LoginView.tsx`, renderizada por `src/shell/Ap
 - Autenticação real via JWT (Bearer token) — deixou de ser demonstrativa em 2026-08-10 (ver §3.2). O item de Security Spec da seção 13 permanece como próximo passo para revisão formal (rotação de token, políticas de senha, etc.), mas o mecanismo de autenticação em si já não é mais texto puro em `localStorage`.
 
 ### 3.5 Sidebar (Navegação Principal)
-Após login, o layout é `<Sidebar>` (`src/shell/Sidebar.tsx`, padrão ForgeHub — ver §2.2) + `main.workspace` (conteúdo), sem roteador (`react-router`) — a view ativa é estado local (`View`) trocado por clique:
-- **Dashboard** — sempre visível.
-- **Solicitações** — sempre visível.
-- **Unidades** — sempre visível.
-- **Usuários** — visível apenas para quem tem a permissão `manageUsers` (hoje, Administrador).
-- **Relatórios** — sempre visível.
-- **Auditoria** — visível apenas para quem tem a permissão `manageAudit` (hoje, Administrador) — ver §3.7.
+Após login, o layout é `<Sidebar>` (`src/shell/Sidebar.tsx`, padrão ForgeHub — ver §2.2) + `main.workspace` (conteúdo), sem roteador (`react-router`) — a view ativa é estado local (`View`) trocado por clique. Itens agrupados por seção (2026-08-10, a pedido explícito, mesmo padrão do ForgeHub — rótulo de grupo em maiúsculas, sem interação própria):
+
+- **Operação** — Dashboard, Solicitações, Unidades (sempre visíveis).
+- **Administração** — Usuários (só quem tem `manageUsers`), Auditoria (só quem tem `manageAudit`, ver §3.7). Grupo inteiro fica oculto se o usuário não tiver nenhuma das duas permissões (ex.: Operador, Consulta).
+
+Não existe mais item "Relatórios" na sidebar — seu conteúdo (consolidação mensal + ranking completo por unidade) foi incorporado à tela de Dashboard (2026-08-10, a pedido explícito — ver §5.2/§5.5).
 
 Colapsável (ícone-só ↔ expandida, botão no cabeçalho da sidebar, estado em `localStorage`). Item ativo marcado só por *pill* de fundo (`bg-white/15`) — sem borda lateral, sem indicador separado no ícone —, igual ao `bg-accent`/`text-accent-foreground` do ForgeHub. O menu de conta (avatar com iniciais, nome, perfil) fica no **rodapé da sidebar** (não mais na topbar), com dropdown: seção "Perfil" (nome/e-mail/perfil), seção "Configurações" (alternar tema claro/escuro) e "Sair" — mesma estrutura do `UserSettingsMenu` do ForgeHub. A topbar (`header.topbar`, ainda em `src/styles.css`) hoje só exibe o título da view ativa.
 
@@ -75,7 +74,7 @@ acesso a dados          →  src/domains/<domain>/repository.ts (+ repository.te
 apresentação            →  src/domains/<domain>/<Domain>View.tsx
 ```
 
-Domínios de negócio: `requests` (solicitações — `src/domains/requests/`), `units` (unidades/setores — `src/domains/units/`), `users` (contas e permissões — `src/domains/users/`), `reports` (dashboard + ranking + consolidação mensal — `src/domains/reports/`, lê `CopyRequest[]` do domínio `requests`, sem `repository.ts`/`types.ts` próprios). Cada domínio tem sua própria pasta em `src/domains/<domain>/`, nunca lógica de outro domínio. Do lado do backend (`backend/`), o mesmo isolamento existe em Python: `app/db/models/`, `app/schemas/`, `app/api/routes/`, um arquivo por domínio (exceto `reports`, que não tem model/tabela própria — computa sobre `copy_requests`, espelhando o frontend).
+Domínios de negócio: `requests` (solicitações — `src/domains/requests/`), `units` (unidades/setores — `src/domains/units/`), `users` (contas e permissões — `src/domains/users/`), `reports` (métricas + ranking + consolidação mensal, todas exibidas dentro do Dashboard — `src/domains/reports/`, lê `CopyRequest[]` do domínio `requests`, sem `repository.ts`/`types.ts` próprios; não tem `<Domain>View.tsx` de tela própria desde que a antiga tela "Relatórios" foi incorporada ao `DashboardView.tsx`, 2026-08-10). Cada domínio tem sua própria pasta em `src/domains/<domain>/`, nunca lógica de outro domínio. Do lado do backend (`backend/`), o mesmo isolamento existe em Python: `app/db/models/`, `app/schemas/`, `app/api/routes/`, um arquivo por domínio (exceto `reports`, que não tem model/tabela própria — computa sobre `copy_requests`, espelhando o frontend).
 
 Peças que **não** são um domínio de negócio ficam fora de `src/domains/`, em `src/shell/`:
 - `AppShell.tsx` — estado da sessão/UI (usuário logado, tema, view ativa, filtros e drafts em trânsito), monta `<Sidebar>` + topbar + roteamento por estado (`View`); chama diretamente os `repository.ts` dos 4 domínios (sem fachada intermediária) e passa dados/callbacks para as Views de cada domínio, sem conter regra de negócio própria.
@@ -141,6 +140,8 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 
 ### 5.2 Dashboard
 - Totais de cópias, solicitações, pendentes, prontas, entregues e consumo estimado de papel.
+- Ranking de unidades (top 6, por faces impressas) e últimas solicitações (movimento recente).
+- Consolidação mensal (solicitações/faces/folhas por mês) e ranking completo de uso por unidade (2026-08-10, a pedido explícito — conteúdo que antes vivia numa tela "Relatórios" separada, agora incorporado direto ao Dashboard; ver §3.5).
 
 ### 5.3 Gestão de Solicitações
 - Criar solicitação com origem Escola ou Sede SEMED.
@@ -154,11 +155,11 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 - Cadastrar e gerenciar unidades escolares e setores (Administrador).
 
 ### 5.5 Relatórios
-- Ranking de unidades por volume.
-- Consolidação mensal.
+Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e a consolidação mensal agora vivem no Dashboard).
 
 ### 5.6 Gestão de Usuários
 - Cadastrar e editar contas de login, com perfil de acesso (Administrador | Operador | Consulta).
+- Tela de consulta (lista) separada da tela de edição/inclusão (mesmo formulário, tela cheia — mesmo padrão de §3.8, aplicado aqui em 2026-08-10 a pedido explícito), com ícones de editar/ativar-desativar por linha.
 - Upload de foto de perfil (avatar) ao editar uma conta existente — ver §3.9.
 
 ### 5.7 Auditoria
@@ -207,7 +208,7 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 3. Administrador pode inativar unidades sem excluir histórico associado.
 
 ### 8.3 Fluxo de Relatórios
-1. Consulta/Administrador acessa dashboard e relatórios.
+1. Qualquer perfil com acesso ao Dashboard vê ranking de unidades, consolidação mensal e uso por unidade ali mesmo (não há mais navegação separada para "Relatórios" — ver §3.5/§5.2).
 2. Sistema consolida totais mensais e ranking de unidades a partir das solicitações existentes.
 
 ## 9. Acceptance Criteria
@@ -239,10 +240,10 @@ duplica/
 │   │   │   └── RequestsView.tsx   # exporta também RequestTable, reaproveitado pelo Dashboard;
 │   │   │                          # tela de consulta e de edição/inclusão em tela cheia (ver §3.8)
 │   │   ├── units/       # mesmo padrão: types.ts / rules.ts / repository.ts / UnitsView.tsx
-│   │   ├── users/       # mesmo padrão, inclui canPerform/permissões em rules.ts; avatar (ver §3.9)
+│   │   ├── users/       # mesmo padrão; consulta/edição em tela cheia (ver §5.6); avatar (ver §3.9)
 │   │   ├── reports/     # rules.ts (métricas do dashboard, ranking, consolidação) + rules.test.ts +
-│   │   │                 # DashboardView.tsx + ReportsView.tsx — sem repository.ts/types.ts próprios,
-│   │   │                 # lê CopyRequest[] do domínio requests
+│   │   │                 # DashboardView.tsx (única tela — sem ReportsView.tsx próprio desde 2026-08-10) —
+│   │   │                 # sem repository.ts/types.ts próprios, lê CopyRequest[] do domínio requests
 │   │   └── audit/       # types.ts + repository.ts + AuditView.tsx — sem rules.ts (ver §3.7)
 │   ├── shell/
 │   │   ├── AppShell.tsx   # estado de sessão/UI + monta Sidebar/topbar/troca de view;

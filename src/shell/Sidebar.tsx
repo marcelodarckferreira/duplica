@@ -1,11 +1,11 @@
-import { BarChart3, Building2, ChevronsLeft, ChevronsRight, ClipboardList, FileText, LogOut, Moon, ShieldCheck, Sun, Users } from "lucide-react";
+import { BarChart3, Building2, ChevronsLeft, ChevronsRight, ClipboardList, LogOut, Moon, ShieldCheck, Sun, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../lib/utils";
 import { User } from "../domains/users/types";
 import { Logo, LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
-export type ShellView = "dashboard" | "requests" | "units" | "users" | "reports" | "audit";
+export type ShellView = "dashboard" | "requests" | "units" | "users" | "audit";
 
 const COLLAPSE_STORAGE_KEY = "grafica.semed.sidebarCollapsed";
 
@@ -51,14 +51,23 @@ export function Sidebar(props: {
     });
   }
 
-  const items: { view: ShellView; label: string; icon: typeof BarChart3 }[] = [
-    { view: "dashboard", label: "Dashboard", icon: BarChart3 },
-    { view: "requests", label: "Solicitações", icon: ClipboardList },
-    { view: "units", label: "Unidades", icon: Building2 },
-    ...(canManageUsers ? [{ view: "users" as const, label: "Usuários", icon: Users }] : []),
-    { view: "reports", label: "Relatórios", icon: FileText },
-    ...(canManageAudit ? [{ view: "audit" as const, label: "Auditoria", icon: ShieldCheck }] : []),
-  ];
+  const groups: { label: string; items: { view: ShellView; label: string; icon: typeof BarChart3 }[] }[] = [
+    {
+      label: "Operação",
+      items: [
+        { view: "dashboard" as const, label: "Dashboard", icon: BarChart3 },
+        { view: "requests" as const, label: "Solicitações", icon: ClipboardList },
+        { view: "units" as const, label: "Unidades", icon: Building2 },
+      ],
+    },
+    {
+      label: "Administração",
+      items: [
+        ...(canManageUsers ? [{ view: "users" as const, label: "Usuários", icon: Users }] : []),
+        ...(canManageAudit ? [{ view: "audit" as const, label: "Auditoria", icon: ShieldCheck }] : []),
+      ],
+    },
+  ].filter((group) => group.items.length > 0);
 
   return (
     <aside
@@ -94,17 +103,24 @@ export function Sidebar(props: {
         )}
       </div>
 
-      <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4">
-        {items.map((item) => (
-          <button
-            key={item.view}
-            type="button"
-            onClick={() => onChangeView(item.view)}
-            className={navLinkClasses(activeView === item.view, collapsed)}
-          >
-            <item.icon size={16} className="shrink-0" />
-            {!collapsed && <span>{item.label}</span>}
-          </button>
+      <nav className="flex-1 space-y-4 overflow-y-auto px-3 py-4">
+        {groups.map((group) => (
+          <div key={group.label} className="space-y-1">
+            {!collapsed && (
+              <p className="px-3 text-[11px] font-bold uppercase tracking-wide text-sidebar-muted">{group.label}</p>
+            )}
+            {group.items.map((item) => (
+              <button
+                key={item.view}
+                type="button"
+                onClick={() => onChangeView(item.view)}
+                className={navLinkClasses(activeView === item.view, collapsed)}
+              >
+                <item.icon size={16} className="shrink-0" />
+                {!collapsed && <span>{item.label}</span>}
+              </button>
+            ))}
+          </div>
         ))}
       </nav>
 
