@@ -181,6 +181,7 @@ export function ChangePasswordModal(props: {
             type={isVisible ? "text" : "password"}
             value={newPassword}
             onChange={(event) => setNewPassword(event.target.value)}
+            minLength={8}
             required
             className="rounded border border-border bg-surface px-3 py-2.5 font-normal text-text"
           />
@@ -191,6 +192,7 @@ export function ChangePasswordModal(props: {
             type={isVisible ? "text" : "password"}
             value={confirmPassword}
             onChange={(event) => setConfirmPassword(event.target.value)}
+            minLength={8}
             required
             className="rounded border border-border bg-surface px-3 py-2.5 font-normal text-text"
           />

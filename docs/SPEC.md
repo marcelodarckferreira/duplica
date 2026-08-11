@@ -138,6 +138,14 @@ O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeH
 - **Duas proteções, backend e frontend:** (1) ninguém exclui a própria conta autenticada (evita autobloqueio no meio da sessão); (2) contas marcadas `is_system` nunca podem ser excluídas — erro 400 explícito nos dois casos. O ícone de excluir já nem aparece na lista para esses dois casos (`UsersView.tsx`, comparando `account.isSystem` e `account.id !== currentUserId`), mas a checagem real de segurança é sempre no backend.
 - **Conta de sistema:** coluna `users.is_system` (boolean, `backend/app/db/models/user.py`), `false` por padrão. Migração `40e91ff86d59` marca a conta seed `id = 'admin'` como `is_system = true` — garante que sempre existe pelo menos uma conta de Admin que não pode sumir do sistema. `UserCreate` (schema de criação/edição) não tem campo `is_system` — não dá pra promover nem despromover uma conta a "sistema" pela tela de Usuários, só via seed/migração.
 
+### 3.16 Reforço de segurança (2026-08-10, a pedido explícito — "verifique a segurança do sistema no frontend e backend")
+Revisão pontual pós-implementação do papel Gerente/exclusão de usuário; achados corrigidos, todos no backend (a checagem real nunca pode ser só no frontend):
+- **Auto-promoção de papel:** `POST /api/v1/users` (`save_user`) agora rejeita (400) qualquer tentativa de alterar o próprio `role` — sem isso, um Gerente (tem `manageUsers` mas não `manageAudit`) conseguia se editar e virar Admin pela própria tela de Usuários.
+- **Auto-desativação via API direta:** `PATCH /api/v1/users/{id}/active` agora também rejeita (400) desativar a própria conta — a proteção já existia só no frontend (`AppShell.tsx`), não no backend; mesmo padrão do que `DELETE /api/v1/users/{id}` já fazia para exclusão (ver §3.15).
+- **Rate limit em `PATCH /api/v1/auth/me`:** 5/minuto, igual ao login — antes só o login tinha `@limiter.limit`; a troca de senha por autoatendimento (que verifica `current_password`) ficava aberta a tentativas ilimitadas.
+- **Senha mínima de 8 caracteres:** validador Pydantic compartilhado (`backend/app/schemas/user.py`, `MIN_PASSWORD_LENGTH`) em `UserCreate.password` e `UserSelfUpdate.password` — antes não havia nenhum requisito de tamanho/força. Frontend ganhou `minLength={8}` nos campos de senha correspondentes (`UsersView.tsx`, `AccountModals.tsx`) como feedback antecipado — a validação que importa continua sendo a do backend.
+- **`pages`/`copies` de `CopyRequest` com `gt=0`:** `RequestDraft`/`RequestUpdate` (`backend/app/schemas/request.py`) não tinham limite inferior — um valor negativo ou zero era aceito e corrompia os totais calculados de faces/folhas.
+
 ## 4. Domain Model
 
 ### 4.1 Unit (Unidade)

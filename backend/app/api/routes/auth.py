@@ -37,7 +37,9 @@ async def me(user: User = Depends(get_current_user)) -> UserOut:
 
 
 @router.patch("/me", response_model=UserOut)
+@limiter.limit("5/minute")
 async def update_me(
+    request: Request,
     payload: UserSelfUpdate,
     db: AsyncSession = Depends(get_db),
     user: User = Depends(get_current_user),

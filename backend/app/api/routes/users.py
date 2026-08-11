@@ -32,7 +32,7 @@ async def list_users(
 async def save_user(
     payload: UserCreate,
     db: AsyncSession = Depends(get_db),
-    _user=Depends(require_permission("manageUsers")),
+    current_user: User = Depends(require_permission("manageUsers")),
 ) -> User:
     email = payload.email.strip().lower()
     username = payload.username.strip().lower()
@@ -51,6 +51,14 @@ async def save_user(
         target = await db.get(User, payload.id)
         if target is None:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
+        # Ninguém edita o próprio papel de acesso por aqui — evita que uma conta
+        # com manageUsers mas sem manageAudit (ex.: Gerente) se auto-promova a
+        # um papel com mais permissões. Trocar de papel é sempre coisa de outra conta.
+        if target.id == current_user.id and payload.role != target.role:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Não é possível alterar o próprio papel de acesso.",
+            )
     else:
         if not payload.password:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Senha obrigatória para nova conta.")
@@ -75,8 +83,11 @@ async def toggle_user_active(
     user_id: str,
     payload: UserToggleActive,
     db: AsyncSession = Depends(get_db),
-    _user=Depends(require_permission("manageUsers")),
+    current_user: User = Depends(require_permission("manageUsers")),
 ) -> User:
+    if user_id == current_user.id and not payload.active:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="A conta em uso não pode ser desativada.")
+
     target = await db.get(User, user_id)
     if target is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")

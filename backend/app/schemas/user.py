@@ -1,4 +1,12 @@
-from pydantic import BaseModel, ConfigDict, Field, computed_field
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+
+MIN_PASSWORD_LENGTH = 8
+
+
+def _validate_password_strength(value: str | None) -> str | None:
+    if value and len(value) < MIN_PASSWORD_LENGTH:
+        raise ValueError(f"A senha precisa ter pelo menos {MIN_PASSWORD_LENGTH} caracteres.")
+    return value
 
 
 class UserOut(BaseModel):
@@ -30,6 +38,8 @@ class UserCreate(BaseModel):
     password: str | None = None
     active: bool = True
 
+    _validate_password = field_validator("password")(_validate_password_strength)
+
 
 class UserToggleActive(BaseModel):
     active: bool
@@ -41,6 +51,8 @@ class UserSelfUpdate(BaseModel):
     # Em branco mantém a senha atual. Preenchida, exige current_password correta.
     password: str | None = None
     current_password: str | None = None
+
+    _validate_password = field_validator("password")(_validate_password_strength)
 
 
 class Token(BaseModel):

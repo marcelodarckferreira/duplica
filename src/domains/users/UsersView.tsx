@@ -159,6 +159,7 @@ export function UsersView(props: {
                 type={isPasswordVisible ? "text" : "password"}
                 value={userForm.password}
                 onChange={(event) => onUserFormChange({ ...userForm, password: event.target.value })}
+                minLength={8}
                 required
               />
             </span>
@@ -178,6 +179,7 @@ export function UsersView(props: {
                 type={isPasswordVisible ? "text" : "password"}
                 value={confirmPassword}
                 onChange={(event) => onConfirmPasswordChange(event.target.value)}
+                minLength={8}
                 required
               />
             </span>

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class StatusHistoryEntryOut(BaseModel):
@@ -45,8 +45,8 @@ class RequestDraft(BaseModel):
     requester: str
     contact: str
     document_description: str
-    pages: int
-    copies: int
+    pages: int = Field(gt=0)
+    copies: int = Field(gt=0)
     duplex: bool
     paper: str
     color_mode: str
@@ -62,8 +62,8 @@ class RequestUpdate(BaseModel):
     requester: str | None = None
     contact: str | None = None
     document_description: str | None = None
-    pages: int | None = None
-    copies: int | None = None
+    pages: int | None = Field(default=None, gt=0)
+    copies: int | None = Field(default=None, gt=0)
     duplex: bool | None = None
     paper: str | None = None
     color_mode: str | None = None
