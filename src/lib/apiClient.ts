@@ -5,18 +5,25 @@ export function apiAssetUrl(path: string): string {
   return `${API_URL}${path}`;
 }
 
-let token: string | null = typeof window !== "undefined" ? window.localStorage.getItem(TOKEN_KEY) : null;
+function readStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return window.localStorage.getItem(TOKEN_KEY) ?? window.sessionStorage.getItem(TOKEN_KEY);
+}
+
+let token: string | null = readStoredToken();
 
 export function getToken(): string | null {
   return token;
 }
 
-export function setToken(next: string | null): void {
+// `remember` decide onde o token persiste: localStorage sobrevive a fechar o
+// navegador ("permanecer conectado"), sessionStorage só dura a aba atual.
+export function setToken(next: string | null, remember: boolean = true): void {
   token = next;
+  window.localStorage.removeItem(TOKEN_KEY);
+  window.sessionStorage.removeItem(TOKEN_KEY);
   if (next) {
-    window.localStorage.setItem(TOKEN_KEY, next);
-  } else {
-    window.localStorage.removeItem(TOKEN_KEY);
+    (remember ? window.localStorage : window.sessionStorage).setItem(TOKEN_KEY, next);
   }
 }
 

@@ -6,7 +6,7 @@ import { setToken } from "../lib/apiClient";
 import { installMockApi } from "../test/mockApi";
 
 async function login(user: UserEvent) {
-  await user.type(screen.getByLabelText("Usuário ou e-mail"), "admin@grafica.local");
+  await user.type(await screen.findByLabelText("Usuário ou e-mail"), "admin@grafica.local");
   await user.type(screen.getByLabelText("Senha"), "admin123");
   await user.click(screen.getByRole("button", { name: "Entrar" }));
 }
@@ -36,6 +36,24 @@ describe("AppShell user menu", () => {
     await user.click(screen.getByRole("button", { name: "Escuro" }));
 
     expect(window.localStorage.getItem("grafica.semed.theme")).toBe("dark");
+  });
+
+  it("restores the session from a stored token after a reload, on every screen", async () => {
+    installMockApi();
+    const user = userEvent.setup();
+    let mounted = render(<AppShell />);
+
+    await login(user);
+    await screen.findByRole("heading", { name: "Visão geral" });
+
+    for (const screenName of ["Solicitações", "Unidades", "Usuários", "Auditoria"]) {
+      await user.click(await screen.findByRole("button", { name: screenName }));
+
+      mounted.unmount();
+      mounted = render(<AppShell />);
+      await screen.findByRole("heading", { name: "Visão geral" }, { timeout: 3000 });
+      expect(screen.queryByLabelText("Usuário ou e-mail")).toBeNull();
+    }
   });
 
   it("edits the own profile and changes the own password from the account menu", async () => {

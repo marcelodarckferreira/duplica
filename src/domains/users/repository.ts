@@ -1,4 +1,4 @@
-import { apiAssetUrl, ApiError, apiFetch, setToken } from "../../lib/apiClient";
+import { apiAssetUrl, ApiError, apiFetch, getToken, setToken } from "../../lib/apiClient";
 import { User, UserDraft } from "./types";
 
 interface UserApiPayload {
@@ -9,6 +9,7 @@ interface UserApiPayload {
   email: string;
   active: boolean;
   avatar_url: string | null;
+  is_system: boolean;
 }
 
 interface TokenResponse {
@@ -26,6 +27,7 @@ function mapUser(payload: UserApiPayload): User {
     email: payload.email,
     active: payload.active,
     avatarUrl: payload.avatar_url ? apiAssetUrl(payload.avatar_url) : null,
+    isSystem: payload.is_system,
   };
 }
 
@@ -45,17 +47,31 @@ export function createUsersRepository() {
       }
     },
 
-    async authenticate(identifier: string, password: string): Promise<User | null> {
+    async authenticate(identifier: string, password: string, remember: boolean = true): Promise<User | null> {
       const body = new URLSearchParams({ username: identifier, password });
       try {
         const result = await apiFetch<TokenResponse>("/api/v1/auth/token", {
           method: "POST",
           body,
         });
-        setToken(result.access_token);
+        setToken(result.access_token, remember);
         return mapUser(result.user);
       } catch (error) {
         if (error instanceof ApiError && error.status === 401) {
+          return null;
+        }
+        throw error;
+      }
+    },
+
+    async restoreSession(): Promise<User | null> {
+      if (!getToken()) return null;
+      try {
+        const result = await apiFetch<UserApiPayload>("/api/v1/auth/me");
+        return mapUser(result);
+      } catch (error) {
+        if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+          setToken(null);
           return null;
         }
         throw error;
@@ -76,6 +92,10 @@ export function createUsersRepository() {
         }),
       });
       return mapUser(result);
+    },
+
+    async deleteUser(id: string): Promise<void> {
+      await apiFetch<void>(`/api/v1/users/${id}`, { method: "DELETE" });
     },
 
     async toggleUserActive(id: string, active: boolean): Promise<User> {

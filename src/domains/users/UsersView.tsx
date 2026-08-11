@@ -1,4 +1,4 @@
-import { ArrowLeft, Camera, Eye, EyeOff, Pencil, Plus, ShieldCheck, UserCheck, UserX } from "lucide-react";
+import { ArrowLeft, Camera, Eye, EyeOff, Pencil, Plus, ShieldCheck, Trash2, UserCheck, UserX } from "lucide-react";
 import { ChangeEvent, FormEvent, useState } from "react";
 import { roles } from "./rules";
 import { User, UserDraft, UserRole } from "./types";
@@ -43,8 +43,10 @@ export function UsersView(props: {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onEditUser: (user: User) => void;
   onToggleUserActive: (user: User) => void;
+  onDeleteUser: (user: User) => void;
   onCancelEdit: () => void;
   onUploadAvatar: (userId: string, file: File) => Promise<void>;
+  currentUserId: string;
 }) {
   const {
     users,
@@ -60,8 +62,10 @@ export function UsersView(props: {
     onSubmit,
     onEditUser,
     onToggleUserActive,
+    onDeleteUser,
     onCancelEdit,
     onUploadAvatar,
+    currentUserId,
   } = props;
 
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
@@ -258,6 +262,16 @@ export function UsersView(props: {
                       >
                         {account.active ? <UserX size={15} /> : <UserCheck size={15} />}
                       </button>
+                      {!account.isSystem && account.id !== currentUserId && (
+                        <button
+                          type="button"
+                          className="icon-row-button icon-row-button-danger"
+                          aria-label={`Excluir ${account.name}`}
+                          onClick={() => onDeleteUser(account)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
                     </div>
                   </td>
                 </tr>

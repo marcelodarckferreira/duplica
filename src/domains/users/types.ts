@@ -1,4 +1,4 @@
-export type UserRole = "Administrador" | "Gerente" | "Operador" | "Consulta";
+export type UserRole = "Admin" | "Gerente" | "Operador" | "Consulta";
 
 export type Permission =
   | "viewDashboard"
@@ -17,6 +17,7 @@ export interface User {
   email: string;
   active: boolean;
   avatarUrl: string | null;
+  isSystem: boolean;
 }
 
 export interface UserDraft {

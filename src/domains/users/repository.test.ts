@@ -22,7 +22,7 @@ describe("users repository", () => {
         JSON.stringify({
           access_token: "fake-jwt",
           token_type: "bearer",
-          user: { id: "admin", name: "Administrador SEMED", role: "Administrador", email: "admin@grafica.local", active: true },
+          user: { id: "admin", name: "Administrador SEMED", role: "Admin", email: "admin@grafica.local", active: true },
         }),
         { status: 200 },
       ),
@@ -80,6 +80,17 @@ describe("users repository", () => {
     expect(result.active).toBe(false);
   });
 
+  it("deletes a user via DELETE", async () => {
+    fetchMock.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+    const repo = createUsersRepository();
+    await repo.deleteUser("user-1");
+
+    const [url, requestInit] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/v1/users/user-1");
+    expect(requestInit.method).toBe("DELETE");
+  });
+
   it("uploads an avatar via multipart POST and maps the returned URL", async () => {
     const saved = {
       id: "user-1",
@@ -103,7 +114,7 @@ describe("users repository", () => {
   });
 
   it("updates the own profile via PATCH /auth/me without touching the password", async () => {
-    const saved = { id: "admin", username: "admin", name: "Novo Nome", role: "Administrador", email: "novo@grafica.local", active: true };
+    const saved = { id: "admin", username: "admin", name: "Novo Nome", role: "Admin", email: "novo@grafica.local", active: true };
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
 
     const repo = createUsersRepository();
@@ -119,7 +130,7 @@ describe("users repository", () => {
   });
 
   it("changes the own password via PATCH /auth/me sending current and new password", async () => {
-    const saved = { id: "admin", username: "admin", name: "Administrador SEMED", role: "Administrador", email: "admin@grafica.local", active: true };
+    const saved = { id: "admin", username: "admin", name: "Administrador SEMED", role: "Admin", email: "admin@grafica.local", active: true };
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
 
     const repo = createUsersRepository();

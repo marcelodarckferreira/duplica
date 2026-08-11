@@ -86,6 +86,10 @@ export function LoginView(props: {
                 </button>
               </div>
             </div>
+            <label className="flex items-center gap-2 text-sm text-muted">
+              <input type="checkbox" name="remember" defaultChecked className="h-4 w-4 rounded border-border" />
+              Permanecer conectado
+            </label>
             {loginError && <p className="m-0 font-bold text-[#a43b2f]">{loginError}</p>}
             <Button type="submit" className="mt-1">
               <ShieldCheck size={18} />

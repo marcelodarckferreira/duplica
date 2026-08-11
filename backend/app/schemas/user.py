@@ -10,6 +10,7 @@ class UserOut(BaseModel):
     role: str
     email: str
     active: bool
+    is_system: bool
     avatar_path: str | None = Field(default=None, exclude=True)
 
     @computed_field

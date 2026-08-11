@@ -87,6 +87,30 @@ async def toggle_user_active(
     return target
 
 
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(
+    user_id: str,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(require_permission("manageUsers")),
+) -> None:
+    if user_id == current_user.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Não é possível excluir a própria conta.")
+
+    target = await db.get(User, user_id)
+    if target is None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
+    if target.is_system:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Esta é uma conta do sistema e não pode ser excluída.")
+
+    if target.avatar_path:
+        avatar_file = UPLOADS_DIR / target.avatar_path
+        if avatar_file.is_relative_to(AVATAR_DIR) and avatar_file.exists():
+            avatar_file.unlink()
+
+    await db.delete(target)
+    await db.commit()
+
+
 @router.post("/{user_id}/avatar", response_model=UserOut)
 async def upload_user_avatar(
     user_id: str,

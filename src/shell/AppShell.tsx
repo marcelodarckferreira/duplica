@@ -8,6 +8,7 @@ import { Origin, Unit } from "../domains/units/types";
 import { UnitsView } from "../domains/units/UnitsView";
 import { canPerform } from "../domains/users/rules";
 import { createUsersRepository } from "../domains/users/repository";
+import { setToken } from "../lib/apiClient";
 import { User, UserDraft } from "../domains/users/types";
 import { UsersView } from "../domains/users/UsersView";
 import { AccessProfilesView } from "../domains/users/AccessProfilesView";
@@ -55,6 +56,7 @@ export function AppShell() {
   const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
   const resolvedTheme = resolveTheme(theme, prefersDark);
   const [user, setUser] = useState<User | null>(null);
+  const [isRestoringSession, setIsRestoringSession] = useState(true);
   const [loginError, setLoginError] = useState("");
   const [activeView, setActiveView] = useState<View>("dashboard");
   const [query, setQuery] = useState("");
@@ -112,6 +114,17 @@ export function AppShell() {
   }
 
   useEffect(() => {
+    usersRepo
+      .restoreSession()
+      .then((restored) => {
+        if (restored) setUser(restored);
+      })
+      .catch(() => {})
+      .finally(() => setIsRestoringSession(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, theme);
   }, [theme]);
 
@@ -155,7 +168,11 @@ export function AppShell() {
     const form = new FormData(event.currentTarget);
     setLoginError("");
     try {
-      const authenticated = await usersRepo.authenticate(String(form.get("email")), String(form.get("password")));
+      const authenticated = await usersRepo.authenticate(
+        String(form.get("email")),
+        String(form.get("password")),
+        form.get("remember") === "on",
+      );
       if (!authenticated) {
         setLoginError("E-mail ou senha inválidos.");
         return;
@@ -292,6 +309,28 @@ export function AppShell() {
     setUserMessage(`${selected.name} ${selected.active ? "desativado" : "ativado"}.`);
   }
 
+  async function handleDeleteUser(selected: User) {
+    if (!user || !canPerform(user.role, "manageUsers")) return;
+    if (selected.id === user.id) {
+      setUserMessage("A conta em uso não pode ser excluída.");
+      return;
+    }
+    if (selected.isSystem) {
+      setUserMessage("Esta é uma conta do sistema e não pode ser excluída.");
+      return;
+    }
+    const confirmed = window.confirm(`Excluir a conta de ${selected.name}? Essa ação não pode ser desfeita.`);
+    if (!confirmed) return;
+
+    try {
+      await usersRepo.deleteUser(selected.id);
+      await refresh();
+      setUserMessage(`Conta de ${selected.name} excluída.`);
+    } catch (error) {
+      setUserMessage(error instanceof Error ? error.message : "Não foi possível excluir a conta.");
+    }
+  }
+
   async function handleUploadAvatar(userId: string, file: File) {
     if (!user || !canPerform(user.role, "manageUsers")) return;
     const updated = await usersRepo.uploadAvatar(userId, file);
@@ -335,6 +374,10 @@ export function AppShell() {
     setAuditEntries([]);
   }
 
+  if (isRestoringSession) {
+    return <div className="theme-root" data-theme={resolvedTheme} />;
+  }
+
   if (!user) {
     return <LoginView theme={resolvedTheme} loginError={loginError} onSubmit={handleLogin} />;
   }
@@ -349,7 +392,10 @@ export function AppShell() {
         user={user}
         theme={theme}
         onChangeTheme={setTheme}
-        onLogout={() => setUser(null)}
+        onLogout={() => {
+          setToken(null);
+          setUser(null);
+        }}
         onUpdateProfile={handleUpdateProfile}
         onChangePassword={handleChangePassword}
       />
@@ -438,8 +484,10 @@ export function AppShell() {
                 onSubmit={handleSaveUser}
                 onEditUser={handleEditUser}
                 onToggleUserActive={handleToggleUserActive}
+                onDeleteUser={handleDeleteUser}
                 onCancelEdit={handleCancelUserEdit}
                 onUploadAvatar={handleUploadAvatar}
+                currentUserId={user.id}
               />
             )}
 

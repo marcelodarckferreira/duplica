@@ -97,7 +97,7 @@ Escopo: **só Solicitações** (não cobre Unidades nem Usuários). Toda criaç�
 - **Modelo:** `AuditLog` (`backend/app/db/models/audit.py`) — `id`, `action` (`create`|`update`|`delete`|`status_change`), `request_id`, `request_code`, `actor_id`, `actor_name`, `detail`, `created_at`. Deliberadamente **sem foreign key** para `copy_requests`: a trilha de auditoria precisa sobreviver à exclusão da solicitação que a originou.
 - **Autoria:** ator e timestamp vêm do usuário autenticado via JWT no backend — nunca de parâmetro enviado pelo frontend (elimina spoofing).
 - **Retenção:** 60 dias, expurgo automático via job diário do APScheduler (`backend/app/main.py`, `scheduler.add_job(..., "interval", days=1)`) — não é expurgo "preguiçoso" (só ao ler), roda independente de alguém abrir a tela.
-- **Acesso:** só quem tem a permissão `manageAudit` (hoje, Administrador) vê `GET /api/v1/audit-log` e pode limpar o log manualmente (`DELETE /api/v1/audit-log`, com confirmação via `window.confirm` — não usa o `ConfirmModal` do §3.8, que ficou restrito ao fluxo de exclusão de solicitação).
+- **Acesso:** só quem tem a permissão `manageAudit` (hoje, Admin) vê `GET /api/v1/audit-log` e pode limpar o log manualmente (`DELETE /api/v1/audit-log`, com confirmação via `window.confirm` — não usa o `ConfirmModal` do §3.8, que ficou restrito ao fluxo de exclusão de solicitação).
 - **Frontend:** domínio `src/domains/audit/` (`types.ts` + `repository.ts` + `AuditView.tsx`, sem `rules.ts` — não há regra de negócio pura aqui, só listagem), item "Auditoria" na sidebar (§3.5).
 
 ### 3.8 Tela de Solicitações: consulta vs. edição/inclusão (2026-08-10, a pedido explícito)
@@ -115,7 +115,7 @@ Segue o mesmo padrão visual do `UserSettingsMenu.tsx` do ForgeHub (avatar circu
 - **Frontend:** `User.avatarUrl` (`src/domains/users/types.ts`), avatar exibido (imagem ou iniciais como fallback) na lista de contas, no formulário de edição e no menu de conta da sidebar (`Sidebar.tsx`) — os três lugares onde o ForgeHub também mostra o avatar do usuário.
 
 ### 3.10 Papel Gerente (2026-08-10, a pedido explícito)
-Quarto papel além de Administrador/Operador/Consulta, fixo no código (não é configurável via UI — ver §3.12). Tem as mesmas permissões do Administrador **exceto** `manageAudit`: `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`. Motivação explícita do usuário: "somente o usuário com perfil de gerente e administrador tem direito de criar usuário" — ou seja, Gerente e Administrador são os dois papéis que podem gerenciar contas; só Administrador limpa o log de auditoria. Definido em `backend/app/core/permissions.py` (`ROLE_PERMISSIONS`) e `src/domains/users/rules.ts` (`ROLE_PERMISSIONS`, exportado para a tela de Perfis de Acesso — ver §3.12).
+Quarto papel além de Admin/Operador/Consulta, fixo no código (não é configurável via UI — ver §3.12). Tem as mesmas permissões do Admin **exceto** `manageAudit`: `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`. Motivação explícita do usuário: "somente o usuário com perfil de gerente e administrador tem direito de criar usuário" — ou seja, Gerente e Admin são os dois papéis que podem gerenciar contas; só Admin limpa o log de auditoria. Definido em `backend/app/core/permissions.py` (`ROLE_PERMISSIONS`) e `src/domains/users/rules.ts` (`ROLE_PERMISSIONS`, exportado para a tela de Perfis de Acesso — ver §3.12).
 
 ### 3.11 Login por usuário ou e-mail (2026-08-10, a pedido explícito)
 Toda conta agora tem um `username` (coluna `users.username`, único, obrigatório, `backend/app/db/models/user.py`) além do `email` — mesmo padrão do ForgeHub. O login (`POST /api/v1/auth/token`) aceita **qualquer um dos dois** no mesmo campo (`identifier`), consultando `User.email == identifier OR User.username == identifier`. O campo de login no frontend (`LoginView.tsx`) mudou de `type="email"` para `type="text"` — obrigatório, já que um username como `admin` não é um e-mail válido para a validação nativa do navegador. Migração `e4687d66643b_add_username_to_users.py` faz backfill de `username` a partir do prefixo do e-mail (`split_part(email, '@', 1)`) antes de aplicar `NOT NULL`/`UNIQUE`, para não quebrar contas já existentes.
@@ -125,8 +125,18 @@ Item "Perfis de Acesso" no grupo Administração da sidebar (`src/domains/users/
 
 ### 3.13 Menu de conta: perfil próprio, senha e tema (2026-08-10, a pedido explícito, padrão ForgeHub)
 O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeHub: seção "Conta" (Minha conta / Alterar senha) + seção "Tema" (Claro/Escuro/Sistema, com check no ativo) + Sair.
-- **Minha conta / Alterar senha:** dois modais (`src/shell/AccountModals.tsx`, `AccountModal`/`ChangePasswordModal`, Tailwind), ambos falando com `PATCH /api/v1/auth/me` (autoatendimento — qualquer usuário autenticado edita seu próprio nome/e-mail/senha, sem precisar de `manageUsers`; nunca altera papel/status). Trocar a senha exige a senha atual correta (`current_password`, verificada no backend antes de aceitar a nova) — proteção extra contra sequestro de sessão, que a edição feita por um Administrador via tela de Usuários não tem (lá é o Administrador que decide a senha de outra conta).
+- **Minha conta / Alterar senha:** dois modais (`src/shell/AccountModals.tsx`, `AccountModal`/`ChangePasswordModal`, Tailwind), ambos falando com `PATCH /api/v1/auth/me` (autoatendimento — qualquer usuário autenticado edita seu próprio nome/e-mail/senha, sem precisar de `manageUsers`; nunca altera papel/status). Trocar a senha exige a senha atual correta (`current_password`, verificada no backend antes de aceitar a nova) — proteção extra contra sequestro de sessão, que a edição feita por um Admin via tela de Usuários não tem (lá é o Admin que decide a senha de outra conta).
 - **Tema em 3 vias:** `ThemeMode` passou de `"light" | "dark"` para `"light" | "dark" | "system"` (`src/shell/theme.ts`). `resolveTheme(mode, prefersDark)` calcula o tema efetivamente aplicado (`data-theme`); no modo `"system"`, a preferência do SO é observada em tempo real via `matchMedia("(prefers-color-scheme: dark)")` (`AppShell.tsx`, listener de `change`), então uma troca de tema do SO com o app aberto reflete sem precisar recarregar.
+
+### 3.14 Sessão persistente ("Permanecer conectado") e restauração ao recarregar (2026-08-10, a pedido explícito)
+- **Checkbox na tela de login:** `src/shell/LoginView.tsx`, campo `remember` (marcado por padrão). Controla só **onde** o token JWT é guardado — `usersRepo.authenticate(identifier, password, remember)` repassa para `setToken(token, remember)` (`src/lib/apiClient.ts`): `remember = true` grava em `localStorage` (sobrevive a fechar o navegador); `false` grava em `sessionStorage` (só dura a aba atual). `getToken()` lê de `localStorage` com fallback para `sessionStorage` na inicialização do módulo.
+- **Bug corrigido no mesmo pedido:** antes desta mudança, o estado `user` do `AppShell` nunca era restaurado a partir de um token já salvo — qualquer F5/recarregamento de página derrubava a sessão de volta pro login, mesmo com o token ainda válido em `localStorage`. Corrigido com um efeito de bootstrap em `AppShell.tsx` que roda uma vez ao montar: chama `usersRepo.restoreSession()` (`GET /api/v1/auth/me` se houver token salvo; limpa o token e retorna `null` em 401/403), preenche `user` se houver sessão válida, e só então libera a renderização (`isRestoringSession`, evita um flash da tela de login antes da checagem terminar). Vale para qualquer tela — a view ativa (`activeView`) não é persistida entre recarregamentos (sempre volta pro Dashboard), mas a sessão em si não cai mais.
+- **Logout agora limpa o token de verdade:** antes, `onLogout` só zerava o estado `user` em memória, sem chamar `setToken(null)` — o JWT continuava em `localStorage` (comportamento pré-existente, ajustado nesta mesma leva por estar diretamente ligado à estratégia de armazenamento do token).
+
+### 3.15 Exclusão de usuário e conta de sistema protegida (2026-08-10, a pedido explícito)
+- **Exclusão real** (hard delete, não é o mesmo que desativar — ver §5.6): ícone de lixeira por linha na tela de Usuários (`DELETE /api/v1/users/{id}`, `manageUsers`). Sem FK de `copy_requests`/`status_history_entries`/`audit_log` para `users.id` (todos guardam nome/ator como string solta), então excluir uma conta não quebra histórico de solicitações nem o log de auditoria.
+- **Duas proteções, backend e frontend:** (1) ninguém exclui a própria conta autenticada (evita autobloqueio no meio da sessão); (2) contas marcadas `is_system` nunca podem ser excluídas — erro 400 explícito nos dois casos. O ícone de excluir já nem aparece na lista para esses dois casos (`UsersView.tsx`, comparando `account.isSystem` e `account.id !== currentUserId`), mas a checagem real de segurança é sempre no backend.
+- **Conta de sistema:** coluna `users.is_system` (boolean, `backend/app/db/models/user.py`), `false` por padrão. Migração `40e91ff86d59` marca a conta seed `id = 'admin'` como `is_system = true` — garante que sempre existe pelo menos uma conta de Admin que não pode sumir do sistema. `UserCreate` (schema de criação/edição) não tem campo `is_system` — não dá pra promover nem despromover uma conta a "sistema" pela tela de Usuários, só via seed/migração.
 
 ## 4. Domain Model
 
@@ -142,15 +152,16 @@ Status possíveis: `Recebido` → `Em produção` → `Pronto` → `Entregue`, o
 Campos: `status`, `date`, `by`.
 
 ### 4.4 User (Usuário)
-Campos: `id`, `username` (único, usado no login junto com `email` — ver §3.11), `name`, `role` (Administrador | Gerente | Operador | Consulta — ver §3.10), `email`, `active`, `avatarUrl` (string absoluta para a imagem servida pelo backend, ou `null` — ver §3.9). Senha nunca trafega nem é armazenada em texto puro: o backend guarda só `hashed_password` (bcrypt, `backend/app/db/models/user.py`) e nunca a devolve nas respostas da API (`UserOut`, `backend/app/schemas/user.py`) — por isso o tipo `User` do frontend (`src/domains/users/types.ts`) não tem mais campo `password`. Ao editar uma conta, deixar o campo de senha em branco mantém a senha atual; preencher troca.
+Campos: `id`, `username` (único, usado no login junto com `email` — ver §3.11), `name`, `role` (Admin | Gerente | Operador | Consulta — ver §3.10), `email`, `active`, `isSystem` (não pode ser excluída — ver §3.15), `avatarUrl` (string absoluta para a imagem servida pelo backend, ou `null` — ver §3.9). Senha nunca trafega nem é armazenada em texto puro: o backend guarda só `hashed_password` (bcrypt, `backend/app/db/models/user.py`) e nunca a devolve nas respostas da API (`UserOut`, `backend/app/schemas/user.py`) — por isso o tipo `User` do frontend (`src/domains/users/types.ts`) não tem mais campo `password`. Ao editar uma conta, deixar o campo de senha em branco mantém a senha atual; preencher troca.
 
 Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`, `manageAudit` (ver §3.7).
 
 ## 5. Functional Requirements
 
 ### 5.1 Autenticação
-- Login demonstrativo com três papéis (Administrador, Operador, Consulta) — quatro contas pré-cadastradas (`src/domains/users/repository.ts`): `admin@grafica.local`, `operador@grafica.local`, `consulta@grafica.local` e `ti.semed@novaiguacu.rj.gov.br` (Administrador, adicionada em 2026-08-10 a pedido explícito).
+- Login por usuário ou e-mail (mesmo campo — ver §3.11), quatro papéis (Admin, Gerente, Operador, Consulta — ver §3.10), cinco contas pré-cadastradas (`backend/app/db/seed.py`): `admin`/`ti.semed` (Admin), `gerente` (Gerente), `operador` (Operador), `consulta` (Consulta).
 - Cada perfil expõe apenas as permissões que lhe cabem.
+- Checkbox "Permanecer conectado" na tela de login (ver §3.14): decide se o token JWT persiste em `localStorage` (sobrevive a fechar o navegador) ou só em `sessionStorage` (dura a aba atual).
 
 ### 5.2 Dashboard
 - Totais de cópias, solicitações, pendentes, prontas, entregues e consumo estimado de papel.
@@ -166,22 +177,22 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 - Tela de consulta (lista) separada da tela de edição/inclusão (mesmo formulário, tela cheia — ver §3.8), com ações de editar/excluir por linha e confirmação de exclusão via modal.
 
 ### 5.4 Unidades e Setores
-- Cadastrar e gerenciar unidades escolares e setores (Administrador).
+- Cadastrar e gerenciar unidades escolares e setores (Admin).
 
 ### 5.5 Relatórios
 Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e a consolidação mensal agora vivem no Dashboard).
 
 ### 5.6 Gestão de Usuários
-- Cadastrar e editar contas de login (usuário, nome, e-mail, senha), com perfil de acesso (Administrador | Gerente | Operador | Consulta — ver §3.10). Só Administrador e Gerente têm a permissão `manageUsers` necessária para acessar esta tela.
-- Tela de consulta (lista) separada da tela de edição/inclusão (mesmo formulário, tela cheia — mesmo padrão de §3.8, aplicado aqui em 2026-08-10 a pedido explícito), com ícones de editar/ativar-desativar por linha.
+- Cadastrar e editar contas de login (usuário, nome, e-mail, senha), com perfil de acesso (Admin | Gerente | Operador | Consulta — ver §3.10). Só Admin e Gerente têm a permissão `manageUsers` necessária para acessar esta tela.
+- Tela de consulta (lista) separada da tela de edição/inclusão (mesmo formulário, tela cheia — mesmo padrão de §3.8, aplicado aqui em 2026-08-10 a pedido explícito), com ícones de editar/ativar-desativar/excluir por linha (excluir some para a própria conta logada e para contas de sistema — ver §3.15).
 - Upload de foto de perfil (avatar) ao editar uma conta existente — ver §3.9.
 
 ### 5.7 Auditoria
-- Consultar o histórico de criação, edição, exclusão e mudança de status das solicitações (só Administrador — ver §3.7).
-- Limpar o log manualmente (só Administrador); expurgo automático após 60 dias, independente de limpeza manual.
+- Consultar o histórico de criação, edição, exclusão e mudança de status das solicitações (só Admin — ver §3.7).
+- Limpar o log manualmente (só Admin); expurgo automático após 60 dias, independente de limpeza manual.
 
 ### 5.8 Perfis de Acesso e conta própria
-- Consultar a matriz fixa de permissões por papel (Administrador/Gerente/Operador/Consulta), só leitura — ver §3.12.
+- Consultar a matriz fixa de permissões por papel (Admin/Gerente/Operador/Consulta), só leitura — ver §3.12.
 - Qualquer usuário autenticado edita seu próprio nome/e-mail e troca sua própria senha (com confirmação da senha atual) pelo menu de conta da sidebar — ver §3.13.
 
 ## 6. Business Rules
@@ -204,7 +215,7 @@ Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e
 1. Consulta só visualiza (painéis e listas) — sem criar, editar ou atualizar produção.
 2. Operador cria solicitações e atualiza produção/entrega, mas não gerencia unidades/usuários/log de auditoria.
 3. Gerente acumula as permissões do Operador mais gestão de unidades e usuários (`manageUnits`, `manageUsers`), mas não gerencia o log de auditoria — ver §3.10.
-4. Administrador acumula todas as permissões, incluindo gestão de usuários, unidades e log de auditoria (`manageAudit` — ver §3.7). É o único papel, junto do Gerente, que pode criar/editar contas de usuário.
+4. Admin acumula todas as permissões, incluindo gestão de usuários, unidades e log de auditoria (`manageAudit` — ver §3.7). É o único papel, junto do Gerente, que pode criar/editar contas de usuário.
 
 ## 7. UI Stack Governance
 - Sem biblioteca de componentes de terceiros neste MVP, exceto o padrão Tailwind/shadcn-style isolado na tela de login (ver seção 2.2); qualquer adoção adicional exige avaliação de licença, acessibilidade, impacto de bundle e manutenção antes de entrar em produção.
@@ -222,9 +233,9 @@ Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e
 5. Solicitação é marcada `Entregue`, com retirada e data registradas.
 
 ### 8.2 Fluxo de Gestão de Unidades
-1. Administrador cadastra unidade (nome, origem, código, contato).
+1. Admin cadastra unidade (nome, origem, código, contato).
 2. Unidade fica disponível para seleção em novas solicitações.
-3. Administrador pode inativar unidades sem excluir histórico associado.
+3. Admin pode inativar unidades sem excluir histórico associado.
 
 ### 8.3 Fluxo de Relatórios
 1. Qualquer perfil com acesso ao Dashboard vê ranking de unidades, consolidação mensal e uso por unidade ali mesmo (não há mais navegação separada para "Relatórios" — ver §3.5/§5.2).

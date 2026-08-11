@@ -7,10 +7,10 @@ from app.db.models.unit import Unit
 from app.db.models.user import User
 
 DEMO_USERS = [
-    {"id": "admin", "username": "admin", "name": "Administrador SEMED", "role": "Administrador", "email": "admin@grafica.local", "password": "admin123"},
+    {"id": "admin", "username": "admin", "name": "Administrador SEMED", "role": "Admin", "email": "admin@grafica.local", "password": "admin123", "is_system": True},
     {"id": "operador", "username": "operador", "name": "Operador da Gráfica", "role": "Operador", "email": "operador@grafica.local", "password": "operador123"},
     {"id": "consulta", "username": "consulta", "name": "Consulta SEMED", "role": "Consulta", "email": "consulta@grafica.local", "password": "consulta123"},
-    {"id": "ti-semed", "username": "ti.semed", "name": "TI SEMED", "role": "Administrador", "email": "ti.semed@novaiguacu.rj.gov.br", "password": "semed123"},
+    {"id": "ti-semed", "username": "ti.semed", "name": "TI SEMED", "role": "Admin", "email": "ti.semed@novaiguacu.rj.gov.br", "password": "semed123"},
     {"id": "gerente", "username": "gerente", "name": "Gerente da Gráfica", "role": "Gerente", "email": "gerente@grafica.local", "password": "gerente123"},
 ]
 
@@ -91,6 +91,7 @@ async def seed() -> None:
                     email=data["email"],
                     hashed_password=hash_password(data["password"]),
                     active=True,
+                    is_system=data.get("is_system", False),
                 )
             )
 

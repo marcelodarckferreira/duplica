@@ -1,9 +1,9 @@
 import { Permission, UserRole } from "./types";
 
-export const roles: UserRole[] = ["Administrador", "Gerente", "Operador", "Consulta"];
+export const roles: UserRole[] = ["Admin", "Gerente", "Operador", "Consulta"];
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
-  Administrador: [
+  Admin: [
     "viewDashboard",
     "createRequests",
     "editRequests",

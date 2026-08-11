@@ -18,6 +18,7 @@ interface MockUser {
   active: boolean;
   password: string;
   avatar_url: string | null;
+  is_system: boolean;
 }
 
 interface MockHistoryEntry {
@@ -85,11 +86,12 @@ export function installMockApi() {
       id: "admin",
       username: "admin",
       name: "Administrador SEMED",
-      role: "Administrador",
+      role: "Admin",
       email: "admin@grafica.local",
       active: true,
       password: "admin123",
       avatar_url: null,
+      is_system: true,
     },
   ];
 
@@ -216,6 +218,13 @@ export function installMockApi() {
       });
     }
 
+    if (path === "/api/v1/auth/me" && method === "GET") {
+      const authHeader = new Headers(init.headers).get("Authorization");
+      if (!authHeader) return json({ detail: "Credenciais inválidas." }, 401);
+      const { password: _password, ...rest } = users[0];
+      return json(rest);
+    }
+
     if (path === "/api/v1/auth/me" && method === "PATCH") {
       const body = JSON.parse(init.body as string);
       const current = users[0];
@@ -329,10 +338,21 @@ export function installMockApi() {
         active: body.active,
         password: body.password,
         avatar_url: null,
+        is_system: false,
       };
       users.push(created);
       const { password: _password, ...rest } = created;
       return json(rest);
+    }
+
+    const userMatch = path.match(/^\/api\/v1\/users\/([^/]+)$/);
+    if (userMatch && method === "DELETE") {
+      const target = users.find((item) => item.id === userMatch[1]);
+      if (!target) return json({ detail: "Usuário não encontrado." }, 404);
+      if (target.is_system) return json({ detail: "Esta é uma conta do sistema e não pode ser excluída." }, 400);
+      const index = users.findIndex((item) => item.id === userMatch[1]);
+      users.splice(index, 1);
+      return noContent();
     }
 
     if (path === "/api/v1/audit-log" && method === "GET") return json(auditEntries);
