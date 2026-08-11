@@ -16,7 +16,7 @@ services:
       - ./data:/docker-entrypoint-initdb.d:ro
       - postgres_data:/var/lib/postgresql/data
     ports:
-      - "5435:5432" # 5432/5433/5434 já usados por outros projetos neste host
+      - "127.0.0.1:5435:5432" # só localhost — 5432/5433/5434 já usados por outros projetos neste host
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U app -d grafica"]
       interval: 5s
