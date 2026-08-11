@@ -1,7 +1,8 @@
-# Postgres do grafica, usado pelo backend real em backend/ (ver docs/SPEC.md §3.2).
-# Volume nomeado (postgres_data) guarda os arquivos reais do banco fora
-# desta pasta, gerenciado pelo próprio Docker — só os scripts de
-# inicialização ficam versionados aqui, em ./data.
+# Postgres + app do grafica (ver docs/SPEC.md §3.2 e §3.17). Volumes nomeados
+# (postgres_data, uploads_data) guardam os arquivos reais fora desta pasta,
+# gerenciados pelo próprio Docker — só os scripts de inicialização do Postgres
+# ficam versionados aqui, em ./data. A imagem do serviço "app" é buildada por
+# scripts/build.sh (nunca `docker compose build` puro — ver o script).
 
 services:
   postgres:
@@ -23,5 +24,31 @@ services:
       timeout: 5s
       retries: 10
 
+  app:
+    image: grafica:latest
+    container_name: grafica_app
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      # Dentro da rede do compose o Postgres é alcançado pelo nome do serviço,
+      # na porta interna (5432) — 127.0.0.1:5435 (o default de Settings) só
+      # vale pra quem roda fora do Docker (modo dev, venv local).
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+    volumes:
+      - uploads_data:/app/backend/uploads
+    ports:
+      - "127.0.0.1:8010:8010"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8010/api/v1/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data:
+  uploads_data:

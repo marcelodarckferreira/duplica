@@ -1,4 +1,6 @@
+import os
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from fastapi import FastAPI
@@ -13,6 +15,13 @@ from app.api.routes.users import UPLOADS_DIR
 from app.core.config import settings
 from app.core.limiter import limiter
 from app.db.base import AsyncSessionLocal
+
+_PROJECT_ROOT = Path(__file__).resolve().parents[2]
+_VERSION_FILE = _PROJECT_ROOT / "VERSION"
+
+GIT_SHA = os.environ.get("GIT_SHA", "unknown")
+VERSION = _VERSION_FILE.read_text().strip() if _VERSION_FILE.exists() else "0.0.0"
+DIST_DIR = _PROJECT_ROOT / "dist"
 
 scheduler = AsyncIOScheduler()
 
@@ -58,4 +67,13 @@ app.include_router(audit.router)
 
 @app.get("/api/v1/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok"}
+    return {"status": "ok", "version": VERSION, "git_sha": GIT_SHA}
+
+
+# Frontend buildado (dist/), servido pela mesma imagem — ver §3.17 do SPEC e
+# scripts/build.sh. Sem client-side routing no app (view ativa é estado local,
+# não rota), então não precisa de fallback de SPA — só servir dist/ com
+# index.html como documento padrão. Montado por último para nunca sombrear
+# nenhuma rota de API ou /uploads acima.
+if DIST_DIR.is_dir():
+    app.mount("/", StaticFiles(directory=DIST_DIR, html=True), name="frontend")

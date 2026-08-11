@@ -23,7 +23,16 @@ Sistema web de controle de cópias/impressões para a SEMED: solicitações orig
 - **Frontend:** React 19 + Vite 6 + TypeScript (strict), organizado por domínio (`src/domains/<domain>/`), Tailwind CSS na "casca" da aplicação (login/sidebar) e na tela de Solicitações, CSS global nas demais telas de conteúdo.
 - **Backend:** Python/FastAPI + SQLAlchemy 2.0 async + Alembic + PostgreSQL, JWT Bearer + bcrypt, rate limiting no login, expurgo automático do log de auditoria via APScheduler.
 
-## Como executar
+## Modos: dev e pro
+
+```bash
+./scripts/dev.sh   # modo dev — Postgres (Docker) + backend (venv, --reload) + frontend (Vite, HMR), nativos
+./scripts/pro.sh   # modo pro — builda a imagem versionada e sobe Postgres + app via Docker Compose
+```
+
+`dev.sh` é idempotente (não derruba o que já está rodando) e serve pra iteração rápida — `http://127.0.0.1:5173` (frontend com HMR) + `http://127.0.0.1:8010` (API). `pro.sh` builda uma imagem Docker única (frontend empacotado dentro do backend, tag `grafica:<VERSION>` + `grafica:latest`, gravando o commit atual) e sobe tudo containerizado em `http://127.0.0.1:8010` (frontend e API na mesma porta/origem). Ambos aplicam as migrations automaticamente. Ver `docs/SPEC.md` §3.17 para os detalhes.
+
+### Passo a passo manual (o que os scripts automatizam)
 
 ### 1. Banco de dados (Postgres via Docker)
 
@@ -61,14 +70,13 @@ npm run build
 
 Os testes do frontend mockam a API (`src/test/mockApi.ts`) — não precisam do backend rodando. O backend ainda não tem suíte automatizada (`pytest`); validação hoje é manual via `curl` contra cada rota (ver `docs/SPEC.md` §13).
 
-## Deploy (build de produção local)
+## Deploy (produção, containerizado)
 
 ```bash
-npm run build
-npm run preview   # serve dist/ em http://127.0.0.1:4174/
+./scripts/pro.sh
 ```
 
-Diferente de `npm run dev`, aqui é o bundle de produção real (`dist/`), não o servidor de desenvolvimento. Requer o backend (porta `8010`) e o Postgres (porta `5435`) no ar.
+Builda a imagem Docker (única — backend serve o frontend estático buildado dentro dela, ver `Dockerfile`), aplica migrations e sobe Postgres + app via Docker Compose. `GET /api/v1/health` expõe `version` e `git_sha` da imagem em execução, pra confirmar que o container rodando é o do commit esperado. Rebuildar sem reiniciar o Postgres: `./scripts/build.sh && docker compose -p grafica up -d app`.
 
 ## Credenciais de demonstração
 
@@ -98,6 +106,7 @@ Login aceita usuário ou e-mail, no mesmo campo.
 - Tela de Solicitações dividida em consulta (lista) e edição/inclusão (formulário em tela cheia), com ações de editar/excluir por linha.
 - Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático agendado após 60 dias de retenção.
 - Upload de foto de perfil para usuários, armazenado em disco no backend.
-- Permissões por perfil (Administrador/Operador/Consulta) aplicadas tanto no frontend quanto no backend.
+- Papéis Admin/Gerente/Operador/Consulta, tela de Perfis de Acesso (matriz fixa de permissões), login por usuário ou e-mail com sessão persistente ("permanecer conectado") e reforço de segurança pós-revisão (contra auto-promoção de papel, rate limit na troca de senha, senha mínima).
+- Deploy em dois modos formalizados (`scripts/dev.sh` nativo, `scripts/pro.sh` containerizado e versionado) — ver `docs/SPEC.md` §3.17.
 
 Histórico de decisões, trade-offs e o estado atual de cada seção está em [`docs/SPEC.md`](docs/SPEC.md).
