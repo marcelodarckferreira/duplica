@@ -6,7 +6,7 @@ import { setToken } from "../lib/apiClient";
 import { installMockApi } from "../test/mockApi";
 
 async function login(user: UserEvent) {
-  await user.type(screen.getByLabelText("E-mail"), "admin@grafica.local");
+  await user.type(screen.getByLabelText("Usuário ou e-mail"), "admin@grafica.local");
   await user.type(screen.getByLabelText("Senha"), "admin123");
   await user.click(screen.getByRole("button", { name: "Entrar" }));
 }
@@ -30,12 +30,41 @@ describe("AppShell user menu", () => {
     await login(user);
     await user.click(await screen.findByRole("button", { name: /abrir menu do usuário/i }));
 
-    expect(screen.getByRole("heading", { name: "Perfil" })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: "Configurações" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Conta" })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: "Tema" })).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: /ativar modo escuro/i }));
+    await user.click(screen.getByRole("button", { name: "Escuro" }));
 
     expect(window.localStorage.getItem("grafica.semed.theme")).toBe("dark");
+  });
+
+  it("edits the own profile and changes the own password from the account menu", async () => {
+    installMockApi();
+    const user = userEvent.setup();
+    render(<AppShell />);
+
+    await login(user);
+    await user.click(await screen.findByRole("button", { name: /abrir menu do usuário/i }));
+    await user.click(screen.getByRole("button", { name: "Minha conta" }));
+
+    const nameField = await screen.findByRole("textbox", { name: "Nome" });
+    await user.clear(nameField);
+    await user.type(nameField, "Administrador Renomeado");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+
+    expect(await screen.findByText("Administrador Renomeado")).toBeTruthy();
+
+    await user.click(screen.getByRole("button", { name: /abrir menu do usuário/i }));
+    await user.click(screen.getByRole("button", { name: "Alterar senha" }));
+
+    await user.type(screen.getByLabelText("Senha atual"), "admin123");
+    await user.type(screen.getByLabelText("Nova senha"), "nova-senha-456");
+    await user.type(screen.getByLabelText("Confirmar nova senha"), "nova-senha-456");
+    await user.click(screen.getByRole("button", { name: "Salvar" }));
+
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog", { name: "Alterar senha" })).toBeNull();
+    });
   });
 
   it("masks account passwords and requires matching confirmation", async () => {
@@ -53,6 +82,7 @@ describe("AppShell user menu", () => {
     expect(password.getAttribute("type")).toBe("password");
     expect(confirmation.getAttribute("type")).toBe("password");
 
+    await user.type(screen.getByLabelText("Usuário"), "nova.pessoa");
     await user.type(screen.getByLabelText("Nome"), "Nova Pessoa");
     await user.type(screen.getByLabelText("E-mail"), "nova@grafica.local");
     await user.type(password, "abc123");

@@ -7,6 +7,7 @@ export default {
     "./src/shell/BackgroundChart.tsx",
     "./src/shell/AppShell.tsx",
     "./src/shell/Sidebar.tsx",
+    "./src/shell/AccountModals.tsx",
     "./src/domains/requests/RequestsView.tsx",
   ],
   // Preflight fica desligado de propósito: o restante das telas (dashboard,

@@ -35,11 +35,17 @@ async def save_user(
     _user=Depends(require_permission("manageUsers")),
 ) -> User:
     email = payload.email.strip().lower()
+    username = payload.username.strip().lower()
 
     result = await db.execute(select(User).where(User.email == email))
     existing_with_email = result.scalar_one_or_none()
     if existing_with_email and existing_with_email.id != payload.id:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Já existe uma conta com este e-mail.")
+
+    result = await db.execute(select(User).where(User.username == username))
+    existing_with_username = result.scalar_one_or_none()
+    if existing_with_username and existing_with_username.id != payload.id:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Já existe uma conta com este usuário.")
 
     if payload.id:
         target = await db.get(User, payload.id)
@@ -51,6 +57,7 @@ async def save_user(
         target = User(id=f"user-{uuid4()}")
         db.add(target)
 
+    target.username = username
     target.name = payload.name.strip()
     target.email = email
     target.role = payload.role

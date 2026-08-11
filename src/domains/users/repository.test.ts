@@ -101,4 +101,38 @@ describe("users repository", () => {
     expect(requestInit.body).toBeInstanceOf(FormData);
     expect(result.avatarUrl).toContain("/uploads/avatars/user-1-abcd1234.png");
   });
+
+  it("updates the own profile via PATCH /auth/me without touching the password", async () => {
+    const saved = { id: "admin", username: "admin", name: "Novo Nome", role: "Administrador", email: "novo@grafica.local", active: true };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
+
+    const repo = createUsersRepository();
+    const result = await repo.updateProfile({ name: "Novo Nome", email: "novo@grafica.local" });
+
+    const [url, requestInit] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/v1/auth/me");
+    expect(requestInit.method).toBe("PATCH");
+    const body = JSON.parse(requestInit.body);
+    expect(body.password).toBeNull();
+    expect(body.current_password).toBeNull();
+    expect(result.name).toBe("Novo Nome");
+  });
+
+  it("changes the own password via PATCH /auth/me sending current and new password", async () => {
+    const saved = { id: "admin", username: "admin", name: "Administrador SEMED", role: "Administrador", email: "admin@grafica.local", active: true };
+    fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
+
+    const repo = createUsersRepository();
+    await repo.changePassword({
+      name: "Administrador SEMED",
+      email: "admin@grafica.local",
+      currentPassword: "admin123",
+      newPassword: "nova-senha-456",
+    });
+
+    const [, requestInit] = fetchMock.mock.calls[0];
+    const body = JSON.parse(requestInit.body);
+    expect(body.current_password).toBe("admin123");
+    expect(body.password).toBe("nova-senha-456");
+  });
 });

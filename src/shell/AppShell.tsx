@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useMemo, useState } from "react";
-import { getInitialTheme, getNextTheme, ThemeMode } from "./theme";
+import { getInitialTheme, resolveTheme, ThemeMode } from "./theme";
 import { LoginView } from "./LoginView";
 import { Sidebar, ShellView } from "./Sidebar";
 import { generateUnitId } from "../domains/units/rules";
@@ -10,6 +10,7 @@ import { canPerform } from "../domains/users/rules";
 import { createUsersRepository } from "../domains/users/repository";
 import { User, UserDraft } from "../domains/users/types";
 import { UsersView } from "../domains/users/UsersView";
+import { AccessProfilesView } from "../domains/users/AccessProfilesView";
 import { calculatePrintTotals, emptyDraft, filterRequests, requestToDraft } from "../domains/requests/rules";
 import { createRequestsRepository } from "../domains/requests/repository";
 import { CopyRequest, RequestDraft, RequestStatus } from "../domains/requests/types";
@@ -38,6 +39,7 @@ const emptySnapshot: Snapshot = { units: [], requests: [], users: [] };
 const THEME_STORAGE_KEY = "grafica.semed.theme";
 
 const emptyUserDraft: UserDraft = {
+  username: "",
   name: "",
   email: "",
   password: "",
@@ -49,12 +51,9 @@ export function AppShell() {
   const [snapshot, setSnapshot] = useState<Snapshot>(emptySnapshot);
   const [hasLoadedSnapshot, setHasLoadedSnapshot] = useState(false);
   const [loadError, setLoadError] = useState("");
-  const [theme, setTheme] = useState<ThemeMode>(() =>
-    getInitialTheme(
-      window.localStorage.getItem(THEME_STORAGE_KEY),
-      window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false,
-    ),
-  );
+  const [theme, setTheme] = useState<ThemeMode>(() => getInitialTheme(window.localStorage.getItem(THEME_STORAGE_KEY)));
+  const [prefersDark, setPrefersDark] = useState(() => window.matchMedia?.("(prefers-color-scheme: dark)").matches ?? false);
+  const resolvedTheme = resolveTheme(theme, prefersDark);
   const [user, setUser] = useState<User | null>(null);
   const [loginError, setLoginError] = useState("");
   const [activeView, setActiveView] = useState<View>("dashboard");
@@ -117,6 +116,14 @@ export function AppShell() {
   }, [theme]);
 
   useEffect(() => {
+    if (!window.matchMedia) return;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const handleChange = (event: MediaQueryListEvent) => setPrefersDark(event.matches);
+    media.addEventListener("change", handleChange);
+    return () => media.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
     if (user) {
       void refresh().catch(() => {});
     } else {
@@ -142,10 +149,6 @@ export function AppShell() {
       setSelectedRequestId(filteredRequests[0].id);
     }
   }, [activeView, filteredRequests, selectedRequestId]);
-
-  function toggleTheme() {
-    setTheme((current) => getNextTheme(current));
-  }
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -266,6 +269,7 @@ export function AppShell() {
     setIsCreatingUser(false);
     setUserForm({
       id: selected.id,
+      username: selected.username,
       name: selected.name,
       email: selected.email,
       password: "",
@@ -305,6 +309,24 @@ export function AppShell() {
     setUserMessage("");
   }
 
+  async function handleUpdateProfile(payload: { name: string; email: string }) {
+    if (!user) return;
+    const updated = await usersRepo.updateProfile(payload);
+    setUser(updated);
+    await refresh();
+  }
+
+  async function handleChangePassword(payload: { currentPassword: string; newPassword: string }) {
+    if (!user) return;
+    const updated = await usersRepo.changePassword({
+      name: user.name,
+      email: user.email,
+      currentPassword: payload.currentPassword,
+      newPassword: payload.newPassword,
+    });
+    setUser(updated);
+  }
+
   async function handleClearAudit() {
     if (!user || !canPerform(user.role, "manageAudit")) return;
     const confirmed = window.confirm("Limpar todo o log de auditoria? Essa ação não pode ser desfeita.");
@@ -314,11 +336,11 @@ export function AppShell() {
   }
 
   if (!user) {
-    return <LoginView theme={theme} loginError={loginError} onSubmit={handleLogin} />;
+    return <LoginView theme={resolvedTheme} loginError={loginError} onSubmit={handleLogin} />;
   }
 
   return (
-    <div className="app-shell theme-root" data-theme={theme}>
+    <div className="app-shell theme-root" data-theme={resolvedTheme}>
       <Sidebar
         activeView={activeView}
         onChangeView={setActiveView}
@@ -326,15 +348,17 @@ export function AppShell() {
         canManageAudit={canPerform(user.role, "manageAudit")}
         user={user}
         theme={theme}
-        onToggleTheme={toggleTheme}
+        onChangeTheme={setTheme}
         onLogout={() => setUser(null)}
+        onUpdateProfile={handleUpdateProfile}
+        onChangePassword={handleChangePassword}
       />
 
       <main className="workspace">
         <header className="topbar">
           <div>
             <p className="eyebrow">Sistema de controle de cópias</p>
-            <h1>{activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Unidades e setores" : activeView === "users" ? "Usuários e perfis" : "Auditoria"}</h1>
+            <h1>{activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Unidades e setores" : activeView === "users" ? "Usuários e perfis" : activeView === "profiles" ? "Perfis de acesso" : "Auditoria"}</h1>
           </div>
         </header>
 
@@ -418,6 +442,8 @@ export function AppShell() {
                 onUploadAvatar={handleUploadAvatar}
               />
             )}
+
+            {activeView === "profiles" && canPerform(user.role, "manageUsers") && <AccessProfilesView />}
 
             {activeView === "audit" && canPerform(user.role, "manageAudit") && (
               <AuditView entries={auditEntries} canClear={canPerform(user.role, "manageAudit")} onClear={handleClearAudit} />

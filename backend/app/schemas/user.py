@@ -5,6 +5,7 @@ class UserOut(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
     id: str
+    username: str
     name: str
     role: str
     email: str
@@ -19,6 +20,7 @@ class UserOut(BaseModel):
 
 class UserCreate(BaseModel):
     id: str | None = None
+    username: str
     name: str
     role: str
     email: str
@@ -30,6 +32,14 @@ class UserCreate(BaseModel):
 
 class UserToggleActive(BaseModel):
     active: bool
+
+
+class UserSelfUpdate(BaseModel):
+    name: str
+    email: str
+    # Em branco mantém a senha atual. Preenchida, exige current_password correta.
+    password: str | None = None
+    current_password: str | None = None
 
 
 class Token(BaseModel):

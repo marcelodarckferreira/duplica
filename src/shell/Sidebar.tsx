@@ -1,11 +1,12 @@
-import { BarChart3, Building2, ChevronsLeft, ChevronsRight, ClipboardList, LogOut, Moon, ShieldCheck, Sun, Users } from "lucide-react";
+import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Key, Lock, LogOut, Monitor, Moon, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../lib/utils";
 import { User } from "../domains/users/types";
+import { AccountModal, ChangePasswordModal } from "./AccountModals";
 import { Logo, LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
-export type ShellView = "dashboard" | "requests" | "units" | "users" | "audit";
+export type ShellView = "dashboard" | "requests" | "units" | "users" | "profiles" | "audit";
 
 const COLLAPSE_STORAGE_KEY = "grafica.semed.sidebarCollapsed";
 
@@ -34,14 +35,29 @@ export function Sidebar(props: {
   canManageAudit: boolean;
   user: User;
   theme: ThemeMode;
-  onToggleTheme: () => void;
+  onChangeTheme: (theme: ThemeMode) => void;
   onLogout: () => void;
+  onUpdateProfile: (payload: { name: string; email: string }) => Promise<void>;
+  onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>;
 }) {
-  const { activeView, onChangeView, canManageUsers, canManageAudit, user, theme, onToggleTheme, onLogout } = props;
+  const {
+    activeView,
+    onChangeView,
+    canManageUsers,
+    canManageAudit,
+    user,
+    theme,
+    onChangeTheme,
+    onLogout,
+    onUpdateProfile,
+    onChangePassword,
+  } = props;
   const [collapsed, setCollapsed] = useState(
     () => window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1",
   );
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   function toggleCollapsed() {
     setCollapsed((current) => {
@@ -64,6 +80,7 @@ export function Sidebar(props: {
       label: "Administração",
       items: [
         ...(canManageUsers ? [{ view: "users" as const, label: "Usuários", icon: Users }] : []),
+        ...(canManageUsers ? [{ view: "profiles" as const, label: "Perfis de Acesso", icon: Lock }] : []),
         ...(canManageAudit ? [{ view: "audit" as const, label: "Auditoria", icon: ShieldCheck }] : []),
       ],
     },
@@ -153,34 +170,53 @@ export function Sidebar(props: {
 
           {isMenuOpen && (
             <div className="absolute bottom-full left-0 z-10 mb-2 w-64 rounded border border-border bg-surface py-1 shadow-lg">
-              <div className="px-3 py-2">
-                <h2 className="m-0 text-xs font-bold uppercase tracking-wide text-muted">Perfil</h2>
-                <dl className="m-0 mt-1.5 grid gap-1 text-sm">
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-muted">Nome</dt>
-                    <dd className="m-0 truncate font-medium text-text">{user.name}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-muted">E-mail</dt>
-                    <dd className="m-0 truncate font-medium text-text">{user.email}</dd>
-                  </div>
-                  <div className="flex justify-between gap-2">
-                    <dt className="text-muted">Perfil</dt>
-                    <dd className="m-0 truncate font-medium text-text">{user.role}</dd>
-                  </div>
-                </dl>
-              </div>
-              <div className="border-t border-border px-1 py-1">
-                <h2 className="m-0 px-2 py-1 text-xs font-bold uppercase tracking-wide text-muted">Configurações</h2>
+              <div className="px-1 py-1">
+                <h2 className="m-0 px-2 py-1 text-xs font-bold uppercase tracking-wide text-muted">Conta</h2>
                 <button
                   type="button"
-                  onClick={onToggleTheme}
-                  aria-label={theme === "light" ? "Ativar modo escuro" : "Ativar modo claro"}
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsAccountModalOpen(true);
+                  }}
                   className="flex w-full items-center gap-2 rounded border-0 bg-transparent px-2 py-1.5 text-left text-sm text-text [appearance:none] hover:bg-surface-soft"
                 >
-                  {theme === "light" ? <Moon size={16} /> : <Sun size={16} />}
-                  {theme === "light" ? "Modo escuro" : "Modo claro"}
+                  <UserIcon size={16} />
+                  Minha conta
                 </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMenuOpen(false);
+                    setIsPasswordModalOpen(true);
+                  }}
+                  className="flex w-full items-center gap-2 rounded border-0 bg-transparent px-2 py-1.5 text-left text-sm text-text [appearance:none] hover:bg-surface-soft"
+                >
+                  <Key size={16} />
+                  Alterar senha
+                </button>
+              </div>
+              <div className="border-t border-border px-1 py-1">
+                <h2 className="m-0 px-2 py-1 text-xs font-bold uppercase tracking-wide text-muted">Tema</h2>
+                {(
+                  [
+                    { mode: "light" as const, label: "Claro", icon: Sun },
+                    { mode: "dark" as const, label: "Escuro", icon: Moon },
+                    { mode: "system" as const, label: "Sistema", icon: Monitor },
+                  ]
+                ).map((option) => (
+                  <button
+                    key={option.mode}
+                    type="button"
+                    onClick={() => onChangeTheme(option.mode)}
+                    className="flex w-full items-center justify-between gap-2 rounded border-0 bg-transparent px-2 py-1.5 text-left text-sm text-text [appearance:none] hover:bg-surface-soft"
+                  >
+                    <span className="flex items-center gap-2">
+                      <option.icon size={16} />
+                      {option.label}
+                    </span>
+                    {theme === option.mode && <Check size={15} className="text-accent-strong" />}
+                  </button>
+                ))}
               </div>
               <div className="border-t border-border px-1 py-1">
                 <button
@@ -199,6 +235,9 @@ export function Sidebar(props: {
           )}
         </div>
       </div>
+
+      <AccountModal open={isAccountModalOpen} user={user} onClose={() => setIsAccountModalOpen(false)} onSave={onUpdateProfile} />
+      <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} onSave={onChangePassword} />
     </aside>
   );
 }

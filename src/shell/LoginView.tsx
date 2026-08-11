@@ -5,7 +5,6 @@ import { Logo, LogoMark } from "./Logo";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Label } from "./ui/label";
-import { ThemeMode } from "./theme";
 
 const pillars = [
   { icon: ClipboardList, label: "Solicitações", copy: "Escolas e Sede SEMED registram pedidos de cópia num único lugar." },
@@ -14,7 +13,7 @@ const pillars = [
 ];
 
 export function LoginView(props: {
-  theme: ThemeMode;
+  theme: "light" | "dark";
   loginError: string;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
@@ -64,8 +63,8 @@ export function LoginView(props: {
 
           <form onSubmit={onSubmit} className="grid gap-3.5" aria-labelledby="login-title">
             <div className="grid gap-1.5">
-              <Label htmlFor="login-email">E-mail</Label>
-              <Input id="login-email" name="email" type="email" required />
+              <Label htmlFor="login-email">Usuário ou e-mail</Label>
+              <Input id="login-email" name="email" type="text" autoComplete="username" required />
             </div>
             <div className="grid gap-1.5">
               <Label htmlFor="login-password">Senha</Label>

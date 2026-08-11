@@ -110,73 +110,83 @@ export function UsersView(props: {
             </div>
           </div>
         )}
-        <label>
-          Nome
-          <input value={userForm.name} onChange={(event) => onUserFormChange({ ...userForm, name: event.target.value })} required />
-        </label>
-        <label>
-          E-mail
-          <input
-            type="email"
-            value={userForm.email}
-            onChange={(event) => onUserFormChange({ ...userForm, email: event.target.value })}
-            required
-          />
-        </label>
-        <div className="field-block">
-          <label htmlFor="account-password">Senha</label>
-          <span className="password-field">
-            <button
-              type="button"
-              aria-label={isPasswordVisible ? "Ocultar confirmação de senha" : "Visualizar confirmação de senha"}
-              onClick={onTogglePasswordVisible}
-            >
-              {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
+        <div className="form-grid">
+          <label className="span-2">
+            Usuário
             <input
-              id="account-password"
-              type={isPasswordVisible ? "text" : "password"}
-              value={userForm.password}
-              onChange={(event) => onUserFormChange({ ...userForm, password: event.target.value })}
+              value={userForm.username}
+              onChange={(event) => onUserFormChange({ ...userForm, username: event.target.value })}
               required
             />
-          </span>
-        </div>
-        <div className="field-block">
-          <label htmlFor="account-password-confirmation">Confirmar senha</label>
-          <span className="password-field">
-            <button
-              type="button"
-              aria-label={isPasswordVisible ? "Ocultar senha" : "Visualizar senha"}
-              onClick={onTogglePasswordVisible}
-            >
-              {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
-            </button>
+          </label>
+          <label className="span-2">
+            Nome
+            <input value={userForm.name} onChange={(event) => onUserFormChange({ ...userForm, name: event.target.value })} required />
+          </label>
+          <label className="span-2">
+            E-mail
             <input
-              id="account-password-confirmation"
-              type={isPasswordVisible ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(event) => onConfirmPasswordChange(event.target.value)}
+              type="email"
+              value={userForm.email}
+              onChange={(event) => onUserFormChange({ ...userForm, email: event.target.value })}
               required
             />
-          </span>
+          </label>
+          <label className="span-2">
+            Perfil
+            <select value={userForm.role} onChange={(event) => onUserFormChange({ ...userForm, role: event.target.value as UserRole })}>
+              {roles.map((role) => (
+                <option key={role}>{role}</option>
+              ))}
+            </select>
+          </label>
+          <div className="field-block span-2">
+            <label htmlFor="account-password">Senha</label>
+            <span className="password-field">
+              <button
+                type="button"
+                aria-label={isPasswordVisible ? "Ocultar confirmação de senha" : "Visualizar confirmação de senha"}
+                onClick={onTogglePasswordVisible}
+              >
+                {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+              <input
+                id="account-password"
+                type={isPasswordVisible ? "text" : "password"}
+                value={userForm.password}
+                onChange={(event) => onUserFormChange({ ...userForm, password: event.target.value })}
+                required
+              />
+            </span>
+          </div>
+          <div className="field-block span-2">
+            <label htmlFor="account-password-confirmation">Confirmar senha</label>
+            <span className="password-field">
+              <button
+                type="button"
+                aria-label={isPasswordVisible ? "Ocultar senha" : "Visualizar senha"}
+                onClick={onTogglePasswordVisible}
+              >
+                {isPasswordVisible ? <EyeOff size={17} /> : <Eye size={17} />}
+              </button>
+              <input
+                id="account-password-confirmation"
+                type={isPasswordVisible ? "text" : "password"}
+                value={confirmPassword}
+                onChange={(event) => onConfirmPasswordChange(event.target.value)}
+                required
+              />
+            </span>
+          </div>
+          <label className="checkbox-label span-4">
+            <input
+              type="checkbox"
+              checked={userForm.active}
+              onChange={(event) => onUserFormChange({ ...userForm, active: event.target.checked })}
+            />
+            Conta ativa
+          </label>
         </div>
-        <label>
-          Perfil
-          <select value={userForm.role} onChange={(event) => onUserFormChange({ ...userForm, role: event.target.value as UserRole })}>
-            {roles.map((role) => (
-              <option key={role}>{role}</option>
-            ))}
-          </select>
-        </label>
-        <label className="checkbox-label">
-          <input
-            type="checkbox"
-            checked={userForm.active}
-            onChange={(event) => onUserFormChange({ ...userForm, active: event.target.checked })}
-          />
-          Conta ativa
-        </label>
         {userMessage && <p className="form-note">{userMessage}</p>}
         <div className="form-actions">
           <button className="primary-action" type="submit"><ShieldCheck size={18} /> Salvar conta</button>
@@ -205,6 +215,7 @@ export function UsersView(props: {
           <table className="data-table">
             <thead>
               <tr>
+                <th>Usuário</th>
                 <th>Nome</th>
                 <th>E-mail</th>
                 <th>Perfil</th>
@@ -215,6 +226,7 @@ export function UsersView(props: {
             <tbody>
               {users.map((account) => (
                 <tr key={account.id}>
+                  <td><code>{account.username}</code></td>
                   <td>
                     <div className="row-identity">
                       <Avatar name={account.name} avatarUrl={account.avatarUrl} size={30} />

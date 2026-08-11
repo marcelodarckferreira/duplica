@@ -739,6 +739,10 @@ textarea {
   grid-column: span 2;
 }
 
+.span-4 {
+  grid-column: 1 / -1;
+}
+
 .checkbox-label {
   align-self: end;
   min-height: 43px;

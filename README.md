@@ -9,7 +9,8 @@ Sistema web de controle de cópias/impressões para a SEMED: solicitações orig
 
 ## Funcionalidades
 
-- Login com perfis Administrador, Operador e Consulta — autenticação JWT contra o Postgres (senha com hash bcrypt), permissões aplicadas tanto no frontend quanto no backend.
+- Login por usuário ou e-mail, com perfis Administrador, Gerente, Operador e Consulta — autenticação JWT contra o Postgres (senha com hash bcrypt), permissões aplicadas tanto no frontend quanto no backend. Tela de Perfis de Acesso mostra a matriz fixa de permissões por papel.
+- Menu de conta na sidebar com edição do próprio perfil, troca de senha (com confirmação da senha atual) e tema claro/escuro/sistema.
 - Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues, consumo estimado de papel, ranking de unidades e consolidação mensal — tudo numa única tela.
 - Solicitações: tela de consulta separada da tela de edição/inclusão, com cálculo automático de faces impressas/folhas consumidas e código único (`CP-2026-0001`) gerados no backend, filtros, busca, histórico de status e confirmação de exclusão via modal.
 - Cadastro de unidades escolares e setores.
@@ -71,11 +72,14 @@ Diferente de `npm run dev`, aqui é o bundle de produção real (`dist/`), não 
 
 ## Credenciais de demonstração
 
-| Perfil | E-mail | Senha |
-|---|---|---|
-| Administrador | `admin@grafica.local` | `admin123` |
-| Operador | `operador@grafica.local` | `operador123` |
-| Consulta | `consulta@grafica.local` | `consulta123` |
+Login aceita usuário ou e-mail, no mesmo campo.
+
+| Perfil | Usuário | E-mail | Senha |
+|---|---|---|---|
+| Administrador | `admin` | `admin@grafica.local` | `admin123` |
+| Gerente | `gerente` | `gerente@grafica.local` | `gerente123` |
+| Operador | `operador` | `operador@grafica.local` | `operador123` |
+| Consulta | `consulta` | `consulta@grafica.local` | `consulta123` |
 
 > Dados de seed (`backend/app/db/seed.py`) para ambiente local/demonstração — troque as senhas antes de qualquer uso real.
 

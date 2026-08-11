@@ -3,6 +3,7 @@ import { User, UserDraft } from "./types";
 
 interface UserApiPayload {
   id: string;
+  username: string;
   name: string;
   role: User["role"];
   email: string;
@@ -19,6 +20,7 @@ interface TokenResponse {
 function mapUser(payload: UserApiPayload): User {
   return {
     id: payload.id,
+    username: payload.username,
     name: payload.name,
     role: payload.role,
     email: payload.email,
@@ -43,8 +45,8 @@ export function createUsersRepository() {
       }
     },
 
-    async authenticate(email: string, password: string): Promise<User | null> {
-      const body = new URLSearchParams({ username: email, password });
+    async authenticate(identifier: string, password: string): Promise<User | null> {
+      const body = new URLSearchParams({ username: identifier, password });
       try {
         const result = await apiFetch<TokenResponse>("/api/v1/auth/token", {
           method: "POST",
@@ -65,6 +67,7 @@ export function createUsersRepository() {
         method: "POST",
         body: JSON.stringify({
           id: draft.id ?? null,
+          username: draft.username,
           name: draft.name,
           role: draft.role,
           email: draft.email,
@@ -89,6 +92,27 @@ export function createUsersRepository() {
       const result = await apiFetch<UserApiPayload>(`/api/v1/users/${id}/avatar`, {
         method: "POST",
         body,
+      });
+      return mapUser(result);
+    },
+
+    async updateProfile(payload: { name: string; email: string }): Promise<User> {
+      const result = await apiFetch<UserApiPayload>("/api/v1/auth/me", {
+        method: "PATCH",
+        body: JSON.stringify({ name: payload.name, email: payload.email, password: null, current_password: null }),
+      });
+      return mapUser(result);
+    },
+
+    async changePassword(payload: { currentPassword: string; newPassword: string; name: string; email: string }): Promise<User> {
+      const result = await apiFetch<UserApiPayload>("/api/v1/auth/me", {
+        method: "PATCH",
+        body: JSON.stringify({
+          name: payload.name,
+          email: payload.email,
+          password: payload.newPassword,
+          current_password: payload.currentPassword,
+        }),
       });
       return mapUser(result);
     },

@@ -57,7 +57,7 @@ Tela de entrada única (`src/shell/LoginView.tsx`, renderizada por `src/shell/Ap
 Após login, o layout é `<Sidebar>` (`src/shell/Sidebar.tsx`, padrão ForgeHub — ver §2.2) + `main.workspace` (conteúdo), sem roteador (`react-router`) — a view ativa é estado local (`View`) trocado por clique. Itens agrupados por seção (2026-08-10, a pedido explícito, mesmo padrão do ForgeHub — rótulo de grupo em maiúsculas, sem interação própria):
 
 - **Operação** — Dashboard, Solicitações, Unidades (sempre visíveis).
-- **Administração** — Usuários (só quem tem `manageUsers`), Auditoria (só quem tem `manageAudit`, ver §3.7). Grupo inteiro fica oculto se o usuário não tiver nenhuma das duas permissões (ex.: Operador, Consulta).
+- **Administração** — Usuários e Perfis de Acesso (ambos só quem tem `manageUsers` — ver §3.12), Auditoria (só quem tem `manageAudit`, ver §3.7). Grupo inteiro fica oculto se o usuário não tiver nenhuma das duas permissões (ex.: Operador, Consulta).
 
 Não existe mais item "Relatórios" na sidebar — seu conteúdo (consolidação mensal + ranking completo por unidade) foi incorporado à tela de Dashboard (2026-08-10, a pedido explícito — ver §5.2/§5.5).
 
@@ -114,6 +114,20 @@ Segue o mesmo padrão visual do `UserSettingsMenu.tsx` do ForgeHub (avatar circu
 - **Modelo:** coluna `avatar_path` em `users` (relativa a `backend/uploads/`), nunca exposta direto na API — `UserOut` expõe só `avatar_url` (computado) e omite `avatar_path` da serialização.
 - **Frontend:** `User.avatarUrl` (`src/domains/users/types.ts`), avatar exibido (imagem ou iniciais como fallback) na lista de contas, no formulário de edição e no menu de conta da sidebar (`Sidebar.tsx`) — os três lugares onde o ForgeHub também mostra o avatar do usuário.
 
+### 3.10 Papel Gerente (2026-08-10, a pedido explícito)
+Quarto papel além de Administrador/Operador/Consulta, fixo no código (não é configurável via UI — ver §3.12). Tem as mesmas permissões do Administrador **exceto** `manageAudit`: `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`. Motivação explícita do usuário: "somente o usuário com perfil de gerente e administrador tem direito de criar usuário" — ou seja, Gerente e Administrador são os dois papéis que podem gerenciar contas; só Administrador limpa o log de auditoria. Definido em `backend/app/core/permissions.py` (`ROLE_PERMISSIONS`) e `src/domains/users/rules.ts` (`ROLE_PERMISSIONS`, exportado para a tela de Perfis de Acesso — ver §3.12).
+
+### 3.11 Login por usuário ou e-mail (2026-08-10, a pedido explícito)
+Toda conta agora tem um `username` (coluna `users.username`, único, obrigatório, `backend/app/db/models/user.py`) além do `email` — mesmo padrão do ForgeHub. O login (`POST /api/v1/auth/token`) aceita **qualquer um dos dois** no mesmo campo (`identifier`), consultando `User.email == identifier OR User.username == identifier`. O campo de login no frontend (`LoginView.tsx`) mudou de `type="email"` para `type="text"` — obrigatório, já que um username como `admin` não é um e-mail válido para a validação nativa do navegador. Migração `e4687d66643b_add_username_to_users.py` faz backfill de `username` a partir do prefixo do e-mail (`split_part(email, '@', 1)`) antes de aplicar `NOT NULL`/`UNIQUE`, para não quebrar contas já existentes.
+
+### 3.12 Perfis de acesso (2026-08-10, a pedido explícito, padrão ForgeHub)
+Item "Perfis de Acesso" no grupo Administração da sidebar (`src/domains/users/AccessProfilesView.tsx`), visível para quem tem `manageUsers`. Mostra uma matriz fixa (papel × permissão, ✓/—) dos 4 papéis — **somente leitura**: não é possível criar papéis novos nem alternar permissões pela UI (decisão explícita do usuário: "fixo no código", não dinâmico via banco — ver também §3.10). Fonte de verdade da matriz é `ROLE_PERMISSIONS` de `src/domains/users/rules.ts`, a mesma usada por `canPerform()`.
+
+### 3.13 Menu de conta: perfil próprio, senha e tema (2026-08-10, a pedido explícito, padrão ForgeHub)
+O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeHub: seção "Conta" (Minha conta / Alterar senha) + seção "Tema" (Claro/Escuro/Sistema, com check no ativo) + Sair.
+- **Minha conta / Alterar senha:** dois modais (`src/shell/AccountModals.tsx`, `AccountModal`/`ChangePasswordModal`, Tailwind), ambos falando com `PATCH /api/v1/auth/me` (autoatendimento — qualquer usuário autenticado edita seu próprio nome/e-mail/senha, sem precisar de `manageUsers`; nunca altera papel/status). Trocar a senha exige a senha atual correta (`current_password`, verificada no backend antes de aceitar a nova) — proteção extra contra sequestro de sessão, que a edição feita por um Administrador via tela de Usuários não tem (lá é o Administrador que decide a senha de outra conta).
+- **Tema em 3 vias:** `ThemeMode` passou de `"light" | "dark"` para `"light" | "dark" | "system"` (`src/shell/theme.ts`). `resolveTheme(mode, prefersDark)` calcula o tema efetivamente aplicado (`data-theme`); no modo `"system"`, a preferência do SO é observada em tempo real via `matchMedia("(prefers-color-scheme: dark)")` (`AppShell.tsx`, listener de `change`), então uma troca de tema do SO com o app aberto reflete sem precisar recarregar.
+
 ## 4. Domain Model
 
 ### 4.1 Unit (Unidade)
@@ -128,7 +142,7 @@ Status possíveis: `Recebido` → `Em produção` → `Pronto` → `Entregue`, o
 Campos: `status`, `date`, `by`.
 
 ### 4.4 User (Usuário)
-Campos: `id`, `name`, `role` (Administrador | Operador | Consulta), `email`, `active`, `avatarUrl` (string absoluta para a imagem servida pelo backend, ou `null` — ver §3.9). Senha nunca trafega nem é armazenada em texto puro: o backend guarda só `hashed_password` (bcrypt, `backend/app/db/models/user.py`) e nunca a devolve nas respostas da API (`UserOut`, `backend/app/schemas/user.py`) — por isso o tipo `User` do frontend (`src/domains/users/types.ts`) não tem mais campo `password`. Ao editar uma conta, deixar o campo de senha em branco mantém a senha atual; preencher troca.
+Campos: `id`, `username` (único, usado no login junto com `email` — ver §3.11), `name`, `role` (Administrador | Gerente | Operador | Consulta — ver §3.10), `email`, `active`, `avatarUrl` (string absoluta para a imagem servida pelo backend, ou `null` — ver §3.9). Senha nunca trafega nem é armazenada em texto puro: o backend guarda só `hashed_password` (bcrypt, `backend/app/db/models/user.py`) e nunca a devolve nas respostas da API (`UserOut`, `backend/app/schemas/user.py`) — por isso o tipo `User` do frontend (`src/domains/users/types.ts`) não tem mais campo `password`. Ao editar uma conta, deixar o campo de senha em branco mantém a senha atual; preencher troca.
 
 Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`, `manageAudit` (ver §3.7).
 
@@ -158,13 +172,17 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e a consolidação mensal agora vivem no Dashboard).
 
 ### 5.6 Gestão de Usuários
-- Cadastrar e editar contas de login, com perfil de acesso (Administrador | Operador | Consulta).
+- Cadastrar e editar contas de login (usuário, nome, e-mail, senha), com perfil de acesso (Administrador | Gerente | Operador | Consulta — ver §3.10). Só Administrador e Gerente têm a permissão `manageUsers` necessária para acessar esta tela.
 - Tela de consulta (lista) separada da tela de edição/inclusão (mesmo formulário, tela cheia — mesmo padrão de §3.8, aplicado aqui em 2026-08-10 a pedido explícito), com ícones de editar/ativar-desativar por linha.
 - Upload de foto de perfil (avatar) ao editar uma conta existente — ver §3.9.
 
 ### 5.7 Auditoria
 - Consultar o histórico de criação, edição, exclusão e mudança de status das solicitações (só Administrador — ver §3.7).
 - Limpar o log manualmente (só Administrador); expurgo automático após 60 dias, independente de limpeza manual.
+
+### 5.8 Perfis de Acesso e conta própria
+- Consultar a matriz fixa de permissões por papel (Administrador/Gerente/Operador/Consulta), só leitura — ver §3.12.
+- Qualquer usuário autenticado edita seu próprio nome/e-mail e troca sua própria senha (com confirmação da senha atual) pelo menu de conta da sidebar — ver §3.13.
 
 ## 6. Business Rules
 
@@ -185,7 +203,8 @@ Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e
 ### 6.4 Regras de Permissão
 1. Consulta só visualiza (painéis e listas) — sem criar, editar ou atualizar produção.
 2. Operador cria solicitações e atualiza produção/entrega, mas não gerencia unidades/usuários/log de auditoria.
-3. Administrador acumula todas as permissões, incluindo gestão de usuários, unidades e log de auditoria (`manageAudit` — ver §3.7).
+3. Gerente acumula as permissões do Operador mais gestão de unidades e usuários (`manageUnits`, `manageUsers`), mas não gerencia o log de auditoria — ver §3.10.
+4. Administrador acumula todas as permissões, incluindo gestão de usuários, unidades e log de auditoria (`manageAudit` — ver §3.7). É o único papel, junto do Gerente, que pode criar/editar contas de usuário.
 
 ## 7. UI Stack Governance
 - Sem biblioteca de componentes de terceiros neste MVP, exceto o padrão Tailwind/shadcn-style isolado na tela de login (ver seção 2.2); qualquer adoção adicional exige avaliação de licença, acessibilidade, impacto de bundle e manutenção antes de entrar em produção.

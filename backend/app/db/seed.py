@@ -7,10 +7,11 @@ from app.db.models.unit import Unit
 from app.db.models.user import User
 
 DEMO_USERS = [
-    {"id": "admin", "name": "Administrador SEMED", "role": "Administrador", "email": "admin@grafica.local", "password": "admin123"},
-    {"id": "operador", "name": "Operador da Gráfica", "role": "Operador", "email": "operador@grafica.local", "password": "operador123"},
-    {"id": "consulta", "name": "Consulta SEMED", "role": "Consulta", "email": "consulta@grafica.local", "password": "consulta123"},
-    {"id": "ti-semed", "name": "TI SEMED", "role": "Administrador", "email": "ti.semed@novaiguacu.rj.gov.br", "password": "semed123"},
+    {"id": "admin", "username": "admin", "name": "Administrador SEMED", "role": "Administrador", "email": "admin@grafica.local", "password": "admin123"},
+    {"id": "operador", "username": "operador", "name": "Operador da Gráfica", "role": "Operador", "email": "operador@grafica.local", "password": "operador123"},
+    {"id": "consulta", "username": "consulta", "name": "Consulta SEMED", "role": "Consulta", "email": "consulta@grafica.local", "password": "consulta123"},
+    {"id": "ti-semed", "username": "ti.semed", "name": "TI SEMED", "role": "Administrador", "email": "ti.semed@novaiguacu.rj.gov.br", "password": "semed123"},
+    {"id": "gerente", "username": "gerente", "name": "Gerente da Gráfica", "role": "Gerente", "email": "gerente@grafica.local", "password": "gerente123"},
 ]
 
 DEMO_UNITS = [
@@ -84,6 +85,7 @@ async def seed() -> None:
             session.add(
                 User(
                     id=data["id"],
+                    username=data["username"],
                     name=data["name"],
                     role=data["role"],
                     email=data["email"],

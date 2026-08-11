@@ -11,6 +11,7 @@ interface MockUnit {
 
 interface MockUser {
   id: string;
+  username: string;
   name: string;
   role: string;
   email: string;
@@ -82,6 +83,7 @@ export function installMockApi() {
   const users: MockUser[] = [
     {
       id: "admin",
+      username: "admin",
       name: "Administrador SEMED",
       role: "Administrador",
       email: "admin@grafica.local",
@@ -195,15 +197,36 @@ export function installMockApi() {
 
     if (path === "/api/v1/auth/token" && method === "POST") {
       const params = new URLSearchParams(init.body as string);
-      const email = params.get("username") ?? "";
+      const identifier = params.get("username") ?? "";
       const password = params.get("password") ?? "";
-      const user = users.find((item) => item.email === email && item.password === password);
-      if (!user) return json({ detail: "E-mail ou senha inválidos." }, 401);
+      const user = users.find((item) => (item.email === identifier || item.username === identifier) && item.password === password);
+      if (!user) return json({ detail: "Usuário/e-mail ou senha inválidos." }, 401);
       return json({
         access_token: "test-token",
         token_type: "bearer",
-        user: { id: user.id, name: user.name, role: user.role, email: user.email, active: user.active, avatar_url: user.avatar_url },
+        user: {
+          id: user.id,
+          username: user.username,
+          name: user.name,
+          role: user.role,
+          email: user.email,
+          active: user.active,
+          avatar_url: user.avatar_url,
+        },
       });
+    }
+
+    if (path === "/api/v1/auth/me" && method === "PATCH") {
+      const body = JSON.parse(init.body as string);
+      const current = users[0];
+      if (body.password && body.password !== "" && body.current_password !== current.password) {
+        return json({ detail: "Senha atual incorreta." }, 400);
+      }
+      current.name = body.name;
+      current.email = body.email;
+      if (body.password) current.password = body.password;
+      const { password: _password, ...rest } = current;
+      return json(rest);
     }
 
     if (path === "/api/v1/units" && method === "GET") return json(units);
@@ -287,6 +310,7 @@ export function installMockApi() {
       const existing = users.find((item) => item.id === body.id);
       if (existing) {
         Object.assign(existing, {
+          username: body.username,
           name: body.name,
           role: body.role,
           email: body.email,
@@ -298,6 +322,7 @@ export function installMockApi() {
       }
       const created: MockUser = {
         id: `user-${users.length + 1}`,
+        username: body.username,
         name: body.name,
         role: body.role,
         email: body.email,

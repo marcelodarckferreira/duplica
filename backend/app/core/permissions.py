@@ -10,6 +10,14 @@ ROLE_PERMISSIONS: dict[str, set[Permission]] = {
         "manageUsers",
         "manageAudit",
     },
+    "Gerente": {
+        "viewDashboard",
+        "createRequests",
+        "editRequests",
+        "updateProduction",
+        "manageUnits",
+        "manageUsers",
+    },
     "Operador": {"viewDashboard", "createRequests", "editRequests", "updateProduction"},
     "Consulta": {"viewDashboard"},
 }
