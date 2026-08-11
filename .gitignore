@@ -12,3 +12,13 @@ backend/uploads/
 sources/
 
 .dev/
+
+*storybook.log
+storybook-static
+
+test-results/
+playwright-report/
+blob-report/
+playwright/.auth/
+
+*.tsbuildinfo

@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# Prepara um banco Postgres isolado (grafica_test) e sobe o backend apontado
+# pra ele, na porta 8011 — nunca toca no banco real (grafica) usado no dia a
+# dia. Chamado pelo playwright.config.ts como webServer da suíte E2E.
+#
+# Recria o banco do zero a cada execução (drop + create) pra garantir estado
+# determinístico entre rodadas de teste — seguro porque é sempre o mesmo
+# banco descartável, nunca o de produção/dev.
+set -euo pipefail
+cd "$(dirname "$0")/.."
+
+TEST_DB="grafica_test"
+
+# Guarda de segurança: se alguém rodar este script com POSTGRES_DB apontando
+# pra outra coisa (ex.: variável de ambiente vazando de outro terminal), abortar
+# em vez de arriscar recriar o banco errado.
+if [ -n "${POSTGRES_DB:-}" ] && [ "${POSTGRES_DB}" != "$TEST_DB" ]; then
+  echo "ERRO: POSTGRES_DB='$POSTGRES_DB' definido no ambiente, mas este script só pode rodar contra '$TEST_DB'." >&2
+  exit 1
+fi
+
+if ! docker ps --filter "name=grafica_postgres" --filter "status=running" --format '{{.Names}}' | grep -q grafica_postgres; then
+  echo "ERRO: container grafica_postgres não está rodando. Suba com scripts/dev.sh antes de rodar os testes E2E." >&2
+  exit 1
+fi
+
+echo "-> recriando banco de teste '$TEST_DB'..."
+docker exec grafica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $TEST_DB;"
+docker exec grafica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $TEST_DB OWNER app;"
+
+export POSTGRES_DB="$TEST_DB"
+export CORS_ORIGINS="http://127.0.0.1:5174"
+
+echo "-> aplicando migrations em '$TEST_DB'..."
+.venv/bin/alembic upgrade head
+
+echo "-> semeando dados de demonstração em '$TEST_DB'..."
+.venv/bin/python -m app.db.seed
+
+echo "-> subindo backend de teste na porta 8011..."
+exec .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8011

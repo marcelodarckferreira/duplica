@@ -1,19 +1,10 @@
 /** @type {import('tailwindcss').Config} */
 export default {
-  content: [
-    "./src/shell/LoginView.tsx",
-    "./src/shell/ui/**/*.{ts,tsx}",
-    "./src/shell/Logo.tsx",
-    "./src/shell/BackgroundChart.tsx",
-    "./src/shell/AppShell.tsx",
-    "./src/shell/Sidebar.tsx",
-    "./src/shell/AccountModals.tsx",
-    "./src/domains/requests/RequestsView.tsx",
-  ],
-  // Preflight fica desligado de propósito: o restante das telas (dashboard,
-  // solicitações, unidades, usuários, relatórios) continua em src/styles.css
-  // (CSS global); um reset do Tailwind vazaria pra lá. Login + sidebar/menu de
-  // conta do AppShell são o escopo formal do Tailwind (ver docs/SPEC.md §2.2).
+  content: ["./src/**/*.{ts,tsx}"],
+  // Preflight fica desligado de propósito: a app nunca adotou o reset do
+  // Tailwind (margens/tipografia padrão do navegador continuam valendo em
+  // todo lugar, e cada tela já foi construída/verificada visualmente nesse
+  // pressuposto). Ligar precisaria de uma auditoria visual completa à parte.
   corePlugins: {
     preflight: false,
   },
@@ -32,6 +23,18 @@ export default {
         sidebar: "var(--sidebar)",
         "sidebar-text": "var(--sidebar-text)",
         "sidebar-muted": "var(--sidebar-muted)",
+        "surface-hover": "var(--surface-hover)",
+        "border-soft": "var(--border-soft)",
+        "status-recebido-fg": "var(--status-recebido-fg)",
+        "status-recebido-bg": "var(--status-recebido-bg)",
+        "status-em-producao-fg": "var(--status-em-producao-fg)",
+        "status-em-producao-bg": "var(--status-em-producao-bg)",
+        "status-pronto-fg": "var(--status-pronto-fg)",
+        "status-pronto-bg": "var(--status-pronto-bg)",
+        "status-entregue-fg": "var(--status-entregue-fg)",
+        "status-entregue-bg": "var(--status-entregue-bg)",
+        "status-cancelado-fg": "var(--status-cancelado-fg)",
+        "status-cancelado-bg": "var(--status-cancelado-bg)",
       },
       borderRadius: {
         DEFAULT: "7px",
