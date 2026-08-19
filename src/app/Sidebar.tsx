@@ -1,13 +1,13 @@
-import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Key, Lock, LogOut, Monitor, Moon, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
+import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../shared/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../shared/ui/dropdown-menu";
 import { User } from "../features/users/model/types";
 import { AccountModal, ChangePasswordModal } from "../features/account/ui/AccountModals";
-import { Logo, LogoMark } from "./Logo";
+import { LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
-export type ShellView = "dashboard" | "requests" | "units" | "users" | "profiles" | "audit";
+export type ShellView = "dashboard" | "requests" | "units" | "people" | "users" | "profiles" | "audit";
 
 const COLLAPSE_STORAGE_KEY = "grafica.semed.sidebarCollapsed";
 
@@ -40,6 +40,7 @@ export function Sidebar(props: {
   onLogout: () => void;
   onUpdateProfile: (payload: { name: string; email: string }) => Promise<void>;
   onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>;
+  onUploadAvatar: (userId: string, file: File) => Promise<void>;
 }) {
   const {
     activeView,
@@ -52,6 +53,7 @@ export function Sidebar(props: {
     onLogout,
     onUpdateProfile,
     onChangePassword,
+    onUploadAvatar,
   } = props;
   const [collapsed, setCollapsed] = useState(
     () => window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1",
@@ -73,7 +75,8 @@ export function Sidebar(props: {
       items: [
         { view: "dashboard" as const, label: "Dashboard", icon: BarChart3 },
         { view: "requests" as const, label: "Solicitações", icon: ClipboardList },
-        { view: "units" as const, label: "Unidades", icon: Building2 },
+        { view: "units" as const, label: "Locais", icon: Building2 },
+        { view: "people" as const, label: "Pessoas", icon: Contact },
       ],
     },
     {
@@ -90,11 +93,11 @@ export function Sidebar(props: {
     <aside
       aria-label="Navegação principal"
       className={cn(
-        "flex h-screen shrink-0 flex-col border-r border-white/10 bg-sidebar transition-[width] duration-200",
+        "flex h-screen shrink-0 flex-col border-r border-white/10 bg-sidebar transition-[width] duration-200 print:hidden",
         collapsed ? "w-16" : "w-60",
       )}
     >
-      <div className={cn("flex h-16 items-center border-b border-white/10", collapsed ? "justify-center px-2" : "justify-between px-4")}>
+      <div className={cn("flex items-center border-b border-white/10 py-3", collapsed ? "justify-center px-2" : "justify-between px-4")}>
         {collapsed ? (
           <button
             type="button"
@@ -107,7 +110,13 @@ export function Sidebar(props: {
           </button>
         ) : (
           <>
-            <Logo size={30} textClassName="text-lg text-white" className="[&_span]:text-white" />
+            <span className="flex items-center gap-2.5">
+              <LogoMark size={30} />
+              <span className="flex flex-col leading-tight">
+                <span className="text-lg font-bold tracking-tight text-white">Duplica</span>
+                <span className="text-xs font-medium text-sidebar-muted">Controle de Impressão</span>
+              </span>
+            </span>
             <button
               type="button"
               aria-label="Recolher menu"
@@ -203,7 +212,13 @@ export function Sidebar(props: {
         </DropdownMenu>
       </div>
 
-      <AccountModal open={isAccountModalOpen} user={user} onClose={() => setIsAccountModalOpen(false)} onSave={onUpdateProfile} />
+      <AccountModal
+        open={isAccountModalOpen}
+        user={user}
+        onClose={() => setIsAccountModalOpen(false)}
+        onSave={onUpdateProfile}
+        onUploadAvatar={onUploadAvatar}
+      />
       <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} onSave={onChangePassword} />
     </aside>
   );

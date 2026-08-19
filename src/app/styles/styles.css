@@ -32,6 +32,10 @@
   --status-entregue-bg: #e4efd9;
   --status-cancelado-fg: #8a342c;
   --status-cancelado-bg: #f8dfdc;
+  --priority-urgente-fg: #9a3412;
+  --priority-urgente-bg: #ffe4d5;
+  --priority-institucional-fg: #4c3a92;
+  --priority-institucional-bg: #e6e1fb;
   color: var(--text);
   background: var(--page-bg);
 }
@@ -62,6 +66,10 @@
   --status-entregue-bg: #283b23;
   --status-cancelado-fg: #ffc4be;
   --status-cancelado-bg: #48221f;
+  --priority-urgente-fg: #fdba8c;
+  --priority-urgente-bg: #4a2a12;
+  --priority-institucional-fg: #d6cffb;
+  --priority-institucional-bg: #322a5c;
 }
 
 * {
@@ -82,4 +90,27 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+@media print {
+  @page {
+    margin: 14mm;
+  }
+
+  /* Relatórios sempre saem em tema claro, mesmo com o app em modo escuro —
+     impressão/PDF não deve depender da preferência de tela do usuário. */
+  .theme-root,
+  .theme-root[data-theme="dark"] {
+    --page-bg: #ffffff;
+    --surface: #ffffff;
+    --surface-soft: #f4f6f2;
+    --surface-hover: #ffffff;
+    --border: #c7cfc9;
+    --border-soft: #dde4de;
+    --text: #16201b;
+    --muted: #4b564f;
+    --label: #263229;
+    color: var(--text);
+    background: var(--page-bg);
+  }
 }

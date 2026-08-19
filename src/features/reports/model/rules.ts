@@ -15,12 +15,19 @@ export function buildDashboardMetrics(requests: CopyRequest[]) {
     delivered: countStatus("Entregue"),
     canceled: countStatus("Cancelado"),
     totalSheets,
-    estimatedReams: Math.round((totalSheets / 500) * 10) / 10,
+    estimatedReams: toReams(totalSheets),
   };
 }
 
-export function getUnitRanking(requests: CopyRequest[]) {
-  const grouped = new Map<string, { unitId: string; unitName: string; requests: number; printedFaces: number }>();
+function toReams(sheets: number): number {
+  return Math.round((sheets / 500) * 10) / 10;
+}
+
+function groupByUnit(requests: CopyRequest[]) {
+  const grouped = new Map<
+    string,
+    { unitId: string; unitName: string; requests: number; printedFaces: number; consumedSheets: number }
+  >();
 
   for (const request of requests) {
     const current = grouped.get(request.unitId) ?? {
@@ -28,13 +35,25 @@ export function getUnitRanking(requests: CopyRequest[]) {
       unitName: request.unitName,
       requests: 0,
       printedFaces: 0,
+      consumedSheets: 0,
     };
     current.requests += 1;
     current.printedFaces += request.printedFaces;
+    current.consumedSheets += request.consumedSheets;
     grouped.set(request.unitId, current);
   }
 
-  return [...grouped.values()].sort((a, b) => b.printedFaces - a.printedFaces);
+  return [...grouped.values()].map((item) => ({ ...item, estimatedReams: toReams(item.consumedSheets) }));
+}
+
+export function getUnitRanking(requests: CopyRequest[]) {
+  return groupByUnit(requests).sort((a, b) => b.printedFaces - a.printedFaces);
+}
+
+// Ranking dos locais por papel efetivamente consumido (resmas), não por faces
+// impressas — usado no painel "locais que mais consumiram" do dashboard.
+export function getUnitConsumptionRanking(requests: CopyRequest[]) {
+  return groupByUnit(requests).sort((a, b) => b.consumedSheets - a.consumedSheets);
 }
 
 export function getMonthlyConsolidation(requests: CopyRequest[]) {
@@ -49,5 +68,7 @@ export function getMonthlyConsolidation(requests: CopyRequest[]) {
     grouped.set(month, current);
   }
 
-  return [...grouped.values()].sort((a, b) => a.month.localeCompare(b.month));
+  return [...grouped.values()]
+    .sort((a, b) => a.month.localeCompare(b.month))
+    .map((item) => ({ ...item, estimatedReams: toReams(item.consumedSheets) }));
 }
