@@ -35,13 +35,15 @@ describe("units repository", () => {
       id: "emef-nova",
       name: "EMEF Nova",
       origin: "Escola",
-      code: "ESC-010",
       active: true,
     });
 
     const [, requestInit] = fetchMock.mock.calls[0];
     expect(requestInit.method).toBe("POST");
-    expect(JSON.parse(requestInit.body)).toMatchObject({ name: "EMEF Nova", code: "ESC-010", origin: "Escola" });
+    // "code" não é enviado pelo cliente: é gerado no servidor.
+    const sentBody = JSON.parse(requestInit.body);
+    expect(sentBody).toMatchObject({ name: "EMEF Nova", origin: "Escola" });
+    expect(sentBody).not.toHaveProperty("code");
     expect(result).toEqual(saved);
   });
 
@@ -50,7 +52,7 @@ describe("units repository", () => {
 
     const repo = createUnitsRepository();
     await expect(
-      repo.saveUnit({ id: "x", name: "X", origin: "Escola", code: "X", active: true }),
+      repo.saveUnit({ id: "x", name: "X", origin: "Escola", active: true }),
     ).rejects.toThrow("Falha ao salvar.");
   });
 });

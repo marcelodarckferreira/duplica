@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
 class UnitOut(BaseModel):
@@ -15,6 +15,14 @@ class UnitOut(BaseModel):
 class UnitSave(BaseModel):
     id: str | None = None
     name: str
-    code: str
     origin: str
     contact: str | None = None
+
+    @field_validator("name")
+    @classmethod
+    def _uppercase_name(cls, value: str) -> str:
+        return value.upper()
+
+
+class UnitToggleActive(BaseModel):
+    active: bool

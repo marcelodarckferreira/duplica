@@ -8,17 +8,34 @@ export const unitsKeys = {
   all: ["units"] as const,
 };
 
-export function useUnitsQuery() {
+export function useUnitsQuery(enabled: boolean) {
   return useQuery({
     queryKey: unitsKeys.all,
     queryFn: () => unitsRepo.getUnits(),
+    enabled,
   });
 }
 
 export function useSaveUnitMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (unit: Unit) => unitsRepo.saveUnit(unit),
+    mutationFn: (unit: Omit<Unit, "code">) => unitsRepo.saveUnit(unit),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
+  });
+}
+
+export function useToggleUnitActiveMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, active }: { id: string; active: boolean }) => unitsRepo.toggleUnitActive(id, active),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
+  });
+}
+
+export function useDeleteUnitMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => unitsRepo.deleteUnit(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: unitsKeys.all }),
   });
 }
