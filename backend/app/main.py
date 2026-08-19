@@ -9,7 +9,7 @@ from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import audit, auth, reports, requests, units, users
+from app.api.routes import audit, auth, people, reports, requests, roles, units, users
 from app.api.routes.audit import purge_expired
 from app.api.routes.users import UPLOADS_DIR
 from app.core.config import settings
@@ -59,10 +59,12 @@ app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 app.include_router(auth.router)
 app.include_router(units.router)
+app.include_router(people.router)
 app.include_router(users.router)
 app.include_router(requests.router)
 app.include_router(reports.router)
 app.include_router(audit.router)
+app.include_router(roles.router)
 
 
 @app.get("/api/v1/health")
