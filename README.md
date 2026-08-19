@@ -26,11 +26,14 @@ Sistema web de controle de cópias/impressões para a SEMED: solicitações orig
 ## Modos: dev e pro
 
 ```bash
-./scripts/dev.sh   # modo dev — Postgres (Docker) + backend (venv, --reload) + frontend (Vite, HMR), nativos
-./scripts/pro.sh   # modo pro — builda a imagem versionada e sobe Postgres + app via Docker Compose
+./scripts/dev.sh           # modo dev — inicia Postgres (Docker) + backend (venv, --reload) + frontend (Vite, HMR)
+./scripts/dev.sh stop      # para os serviços dev (backend e frontend)
+./scripts/dev.sh stop --all # para os serviços dev e o container Postgres
+./scripts/dev.sh status    # exibe o status atual dos serviços dev
+./scripts/pro.sh           # modo pro — builda a imagem versionada e sobe Postgres + app via Docker Compose
 ```
 
-`dev.sh` é idempotente (não derruba o que já está rodando) e serve pra iteração rápida — `http://127.0.0.1:5173` (frontend com HMR) + `http://127.0.0.1:8010` (API). `pro.sh` builda uma imagem Docker única (frontend empacotado dentro do backend, tag `grafica:<VERSION>` + `grafica:latest`, gravando o commit atual) e sobe tudo containerizado em `http://127.0.0.1:8010` (frontend e API na mesma porta/origem). Ambos aplicam as migrations automaticamente. Ver `docs/SPEC.md` §3.17 para os detalhes.
+`dev.sh` é idempotente (não derruba o que já está rodando) e serve pra iteração rápida — `http://127.0.0.1:5173` (frontend com HMR) + `http://127.0.0.1:8010` (API). Suporta os subcomandos `stop` (ou `stop --all`) e `status`. `pro.sh` builda uma imagem Docker única (frontend empacotado dentro do backend, tag `duplica:<VERSION>` + `duplica:latest`, gravando o commit atual) e sobe tudo containerizado em `http://127.0.0.1:8010` (frontend e API na mesma porta/origem). Ambos aplicam as migrations automaticamente. Ver `docs/SPEC.md` §3.17 para os detalhes.
 
 ### Passo a passo manual (o que os scripts automatizam)
 
@@ -76,7 +79,7 @@ Os testes do frontend mockam a API (`src/test/mockApi.ts`) — não precisam do 
 ./scripts/pro.sh
 ```
 
-Builda a imagem Docker (única — backend serve o frontend estático buildado dentro dela, ver `Dockerfile`), aplica migrations e sobe Postgres + app via Docker Compose. `GET /api/v1/health` expõe `version` e `git_sha` da imagem em execução, pra confirmar que o container rodando é o do commit esperado. Rebuildar sem reiniciar o Postgres: `./scripts/build.sh && docker compose -p grafica up -d app`.
+Builda a imagem Docker (única — backend serve o frontend estático buildado dentro dela, ver `Dockerfile`), aplica migrations e sobe Postgres + app via Docker Compose. `GET /api/v1/health` expõe `version` e `git_sha` da imagem em execução, pra confirmar que o container rodando é o do commit esperado. Rebuildar sem reiniciar o Postgres: `./scripts/build.sh && docker compose -p duplica up -d app`.
 
 ## Credenciais de demonstração
 

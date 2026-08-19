@@ -10,7 +10,7 @@ class Settings(BaseSettings):
 
     POSTGRES_HOST: str = "127.0.0.1"
     POSTGRES_PORT: int = 5435
-    POSTGRES_DB: str = "grafica"
+    POSTGRES_DB: str = "duplica"
     POSTGRES_USER: str = "app"
     POSTGRES_PASSWORD: str
 

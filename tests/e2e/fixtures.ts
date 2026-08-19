@@ -1,7 +1,7 @@
 import { Page } from "@playwright/test";
 
 // Credenciais da massa de dados semeada por backend/scripts/e2e_bootstrap.sh
-// (banco de teste isolado grafica_test — ver backend/app/db/seed.py).
+// (banco de teste isolado duplica_test — ver backend/app/db/seed.py).
 export const DEMO_USERS = {
   admin: { identifier: "admin", password: "admin123" },
   gerente: { identifier: "gerente", password: "gerente123" },

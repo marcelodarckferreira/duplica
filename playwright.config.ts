@@ -1,6 +1,6 @@
 import { defineConfig, devices } from "@playwright/test";
 
-// Suíte E2E roda contra um banco Postgres isolado (grafica_test, recriado do
+// Suíte E2E roda contra um banco Postgres isolado (duplica_test, recriado do
 // zero a cada execução por backend/scripts/e2e_bootstrap.sh) e portas
 // dedicadas (backend 8011, frontend 5174) — nunca o backend/banco reais de
 // dev (8010/5435), pra não arriscar os dados de uso real do sistema.

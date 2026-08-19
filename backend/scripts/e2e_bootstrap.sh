@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# Prepara um banco Postgres isolado (grafica_test) e sobe o backend apontado
-# pra ele, na porta 8011 — nunca toca no banco real (grafica) usado no dia a
+# Prepara um banco Postgres isolado (duplica_test) e sobe o backend apontado
+# pra ele, na porta 8011 — nunca toca no banco real (duplica) usado no dia a
 # dia. Chamado pelo playwright.config.ts como webServer da suíte E2E.
 #
 # Recria o banco do zero a cada execução (drop + create) pra garantir estado
@@ -9,7 +9,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-TEST_DB="grafica_test"
+TEST_DB="duplica_test"
 
 # Guarda de segurança: se alguém rodar este script com POSTGRES_DB apontando
 # pra outra coisa (ex.: variável de ambiente vazando de outro terminal), abortar
@@ -19,14 +19,14 @@ if [ -n "${POSTGRES_DB:-}" ] && [ "${POSTGRES_DB}" != "$TEST_DB" ]; then
   exit 1
 fi
 
-if ! docker ps --filter "name=grafica_postgres" --filter "status=running" --format '{{.Names}}' | grep -q grafica_postgres; then
-  echo "ERRO: container grafica_postgres não está rodando. Suba com scripts/dev.sh antes de rodar os testes E2E." >&2
+if ! docker ps --filter "name=duplica_postgres" --filter "status=running" --format '{{.Names}}' | grep -q duplica_postgres; then
+  echo "ERRO: container duplica_postgres não está rodando. Suba com scripts/dev.sh antes de rodar os testes E2E." >&2
   exit 1
 fi
 
 echo "-> recriando banco de teste '$TEST_DB'..."
-docker exec grafica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $TEST_DB;"
-docker exec grafica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $TEST_DB OWNER app;"
+docker exec duplica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "DROP DATABASE IF EXISTS $TEST_DB;"
+docker exec duplica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "CREATE DATABASE $TEST_DB OWNER app;"
 
 export POSTGRES_DB="$TEST_DB"
 export CORS_ORIGINS="http://127.0.0.1:5174"

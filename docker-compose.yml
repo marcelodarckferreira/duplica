@@ -1,16 +1,22 @@
-# Postgres + app do grafica (ver docs/SPEC.md §3.2 e §3.17). Volumes nomeados
+# Postgres + app do Duplica (ver docs/SPEC.md §3.2 e §3.17). Volumes nomeados
 # (postgres_data, uploads_data) guardam os arquivos reais fora desta pasta,
 # gerenciados pelo próprio Docker — só os scripts de inicialização do Postgres
 # ficam versionados aqui, em ./data. A imagem do serviço "app" é buildada por
 # scripts/build.sh (nunca `docker compose build` puro — ver o script).
+#
+# Os volumes nomeados abaixo apontam explicitamente pra `grafica_postgres_data`
+# / `grafica_uploads_data` (nome legado, de antes da renomeação do produto pra
+# Duplica em 2026-08-10) — são identificadores internos do Docker, nunca
+# expostos a nenhum usuário, então preservamos o volume existente em vez de
+# migrar dados pra um novo nome só por estética.
 
 services:
   postgres:
     image: postgres:16
-    container_name: grafica_postgres
+    container_name: duplica_postgres
     restart: unless-stopped
     environment:
-      POSTGRES_DB: grafica
+      POSTGRES_DB: duplica
       POSTGRES_USER: app
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env, nunca hardcode}
     volumes:
@@ -19,14 +25,14 @@ services:
     ports:
       - "127.0.0.1:5435:5432" # só localhost — 5432/5433/5434 já usados por outros projetos neste host
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U app -d grafica"]
+      test: ["CMD-SHELL", "pg_isready -U app -d duplica"]
       interval: 5s
       timeout: 5s
       retries: 10
 
   app:
-    image: grafica:latest
-    container_name: grafica_app
+    image: duplica:latest
+    container_name: duplica_app
     restart: unless-stopped
     depends_on:
       postgres:
@@ -51,4 +57,6 @@ services:
 
 volumes:
   postgres_data:
+    name: grafica_postgres_data
   uploads_data:
+    name: grafica_uploads_data
