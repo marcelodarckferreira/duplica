@@ -36,8 +36,11 @@ async def get_current_user(
 
 
 def require_permission(permission: Permission):
-    async def dependency(user: User = Depends(get_current_user)) -> User:
-        if not can_perform(user.role, permission):
+    async def dependency(
+        user: User = Depends(get_current_user),
+        db: AsyncSession = Depends(get_db),
+    ) -> User:
+        if not await can_perform(db, user.role, permission):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Sem permissão para esta ação.",
