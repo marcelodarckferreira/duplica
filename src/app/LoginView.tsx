@@ -1,4 +1,4 @@
-import { BarChart3, ClipboardList, Eye, EyeOff, Printer, ShieldCheck } from "lucide-react";
+import { BarChart3, ClipboardList, Eye, EyeOff, Loader2, Printer, ShieldCheck } from "lucide-react";
 import { FormEvent, useState } from "react";
 import { BackgroundChart } from "./BackgroundChart";
 import { Logo, LogoMark } from "./Logo";
@@ -8,17 +8,18 @@ import { Input } from "../shared/ui/input";
 import { Label } from "../shared/ui/label";
 
 const pillars = [
-  { icon: ClipboardList, label: "Solicitações", copy: "Escolas e Sede SEMED registram pedidos de cópia num único lugar." },
+  { icon: ClipboardList, label: "Solicitações", copy: "Escolas e setores da SEMED registram pedidos de cópia num único lugar." },
   { icon: Printer, label: "Produção e entrega", copy: "Status, histórico e retirada acompanhados do início ao fim." },
-  { icon: BarChart3, label: "Relatórios", copy: "Ranking de unidades e consolidação mensal em tempo real." },
+  { icon: BarChart3, label: "Relatórios", copy: "Ranking de locais e consolidação mensal em tempo real." },
 ];
 
 export function LoginView(props: {
   theme: "light" | "dark";
   loginError: string;
+  isSubmitting: boolean;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 }) {
-  const { theme, loginError, onSubmit } = props;
+  const { theme, loginError, isSubmitting, onSubmit } = props;
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
 
   return (
@@ -92,9 +93,9 @@ export function LoginView(props: {
               Permanecer conectado
             </label>
             {loginError && <p className="m-0 font-bold text-[#a43b2f]">{loginError}</p>}
-            <Button type="submit" className="mt-1">
-              <ShieldCheck size={18} />
-              Entrar
+            <Button type="submit" className="mt-1" disabled={isSubmitting} aria-busy={isSubmitting}>
+              {isSubmitting ? <Loader2 size={18} className="animate-spin" /> : <ShieldCheck size={18} />}
+              {isSubmitting ? "Entrando..." : "Entrar"}
             </Button>
           </form>
         </div>

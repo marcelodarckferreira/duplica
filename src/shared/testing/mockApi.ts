@@ -9,6 +9,15 @@ interface MockUnit {
   active: boolean;
 }
 
+interface MockPerson {
+  id: string;
+  name: string;
+  registration_number: string;
+  phone: string;
+  unit_id: string;
+  active: boolean;
+}
+
 interface MockUser {
   id: string;
   username: string;
@@ -22,6 +31,7 @@ interface MockUser {
 }
 
 interface MockHistoryEntry {
+  id: number;
   status: string;
   date: string;
   by: string;
@@ -45,11 +55,14 @@ interface MockRequest {
   unit_id: string;
   unit_name: string;
   requester: string;
+  registration_number: string;
   contact: string;
   document_description: string;
   pages: number;
   copies: number;
   duplex: boolean;
+  staple: string;
+  layout: string;
   printed_faces: number;
   consumed_sheets: number;
   paper: string;
@@ -62,6 +75,7 @@ interface MockRequest {
   produced_at: string;
   delivered_at: string;
   picked_up_by: string;
+  signature: string;
   notes: string;
   history: MockHistoryEntry[];
 }
@@ -78,7 +92,14 @@ export function installMockApi() {
   const units: MockUnit[] = [
     { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "Escola", code: "ESC-001", contact: null, active: true },
     { id: "emef-ana-nery", name: "EMEF Ana Nery", origin: "Escola", code: "ESC-002", contact: null, active: true },
-    { id: "setor-pedagogico", name: "Sede - Coordenação Pedagógica", origin: "Sede SEMED", code: "SED-PED", contact: null, active: true },
+    { id: "setor-pedagogico", name: "Sede - Coordenação Pedagógica", origin: "Setor SEMED", code: "SED-PED", contact: null, active: true },
+  ];
+
+  const people: MockPerson[] = [
+    { id: "ana-souza", name: "Ana Souza", registration_number: "12345", phone: "(11) 99999-0000", unit_id: "emef-paulo-freire", active: true },
+    { id: "solicitante-editado", name: "Solicitante Editado", registration_number: "", phone: "", unit_id: "emef-paulo-freire", active: true },
+    { id: "rafael-mendes", name: "Rafael Mendes", registration_number: "67890", phone: "(11) 98888-1010", unit_id: "setor-pedagogico", active: true },
+    { id: "beatriz-lima", name: "Beatriz Lima", registration_number: "", phone: "(11) 97777-2323", unit_id: "emef-ana-nery", active: true },
   ];
 
   const users: MockUser[] = [
@@ -103,14 +124,17 @@ export function installMockApi() {
       unit_id: "emef-paulo-freire",
       unit_name: "EMEF Paulo Freire",
       requester: "Ana Souza",
+      registration_number: "12345",
       contact: "(11) 99999-0000",
       document_description: "Avaliação de Língua Portuguesa - 5º ano",
       pages: 8,
       copies: 120,
       duplex: false,
+      staple: "Off",
+      layout: "Retrato",
       printed_faces: 960,
       consumed_sheets: 960,
-      paper: "A4",
+      paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
       color_mode: "P&B",
       priority: "Normal",
       desired_deadline: "2026-08-15",
@@ -120,24 +144,28 @@ export function installMockApi() {
       produced_at: "",
       delivered_at: "",
       picked_up_by: "",
+      signature: "",
       notes: "",
-      history: [{ status: "Recebido", date: "2026-08-10", by: "Marta" }],
+      history: [{ id: 1, status: "Recebido", date: "2026-08-10", by: "Marta" }],
     },
     {
       id: "req-2",
       code: "CP-2026-0002",
-      origin: "Sede SEMED",
+      origin: "Setor SEMED",
       unit_id: "setor-pedagogico",
       unit_name: "Sede - Coordenação Pedagógica",
       requester: "Rafael Mendes",
+      registration_number: "67890",
       contact: "(11) 98888-1010",
       document_description: "Circular de formação continuada",
       pages: 3,
       copies: 80,
       duplex: true,
+      staple: "Top Left 1",
+      layout: "Paisagem",
       printed_faces: 240,
       consumed_sheets: 160,
-      paper: "A4",
+      paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
       color_mode: "P&B",
       priority: "Institucional",
       desired_deadline: "2026-08-12",
@@ -147,8 +175,9 @@ export function installMockApi() {
       produced_at: "",
       delivered_at: "",
       picked_up_by: "",
+      signature: "",
       notes: "",
-      history: [{ status: "Recebido", date: "2026-08-09", by: "Carlos" }],
+      history: [{ id: 2, status: "Recebido", date: "2026-08-09", by: "Carlos" }],
     },
     {
       id: "req-3",
@@ -157,14 +186,17 @@ export function installMockApi() {
       unit_id: "emef-ana-nery",
       unit_name: "EMEF Ana Nery",
       requester: "Beatriz Lima",
+      registration_number: "",
       contact: "(11) 97777-2323",
       document_description: "Atividades de recuperação",
       pages: 5,
       copies: 45,
       duplex: true,
+      staple: "Top 2",
+      layout: "Retrato",
       printed_faces: 225,
       consumed_sheets: 135,
-      paper: "A4",
+      paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
       color_mode: "P&B",
       priority: "Urgente",
       desired_deadline: "2026-08-11",
@@ -174,8 +206,9 @@ export function installMockApi() {
       produced_at: "2026-08-10",
       delivered_at: "",
       picked_up_by: "",
+      signature: "",
       notes: "",
-      history: [{ status: "Recebido", date: "2026-08-08", by: "Marta" }],
+      history: [{ id: 3, status: "Recebido", date: "2026-08-08", by: "Marta" }],
     },
   ];
 
@@ -239,6 +272,7 @@ export function installMockApi() {
     }
 
     if (path === "/api/v1/units" && method === "GET") return json(units);
+    if (path === "/api/v1/people" && method === "GET") return json(people);
     if (path === "/api/v1/users" && method === "GET") {
       return json(users.map(({ password: _password, ...rest }) => rest));
     }
@@ -254,11 +288,14 @@ export function installMockApi() {
         unit_id: body.unit_id,
         unit_name: unit?.name ?? "",
         requester: body.requester,
+        registration_number: body.registration_number ?? "",
         contact: body.contact,
         document_description: body.document_description,
         pages: body.pages,
         copies: body.copies,
         duplex: body.duplex,
+        staple: body.staple ?? "",
+        layout: body.layout ?? "Retrato",
         printed_faces: body.pages * body.copies,
         consumed_sheets: (body.duplex ? Math.ceil(body.pages / 2) : body.pages) * body.copies,
         paper: body.paper,
@@ -271,8 +308,9 @@ export function installMockApi() {
         produced_at: "",
         delivered_at: "",
         picked_up_by: "",
+        signature: "",
         notes: body.notes,
-        history: [{ status: "Recebido", date: "2026-08-10", by: body.production_owner || "Sistema" }],
+        history: [{ id: Date.now(), status: "Recebido", date: "2026-08-10", by: body.production_owner || "Sistema" }],
       };
       requests.push(created);
       return json(created);
@@ -297,21 +335,80 @@ export function installMockApi() {
       if (!request) return json({ detail: "Solicitação não encontrada." }, 404);
       const body = JSON.parse(init.body as string);
       request.status = body.status;
+      if (body.status === "Entregue") {
+        request.picked_up_by = body.picked_up_by || request.picked_up_by;
+        request.signature = body.signature || request.signature;
+      }
       return json(request);
     }
 
     if (path === "/api/v1/units" && method === "POST") {
       const body = JSON.parse(init.body as string);
+      const id = body.id ?? body.name.toLowerCase().replace(/\s+/g, "-");
+      const existing = units.find((item) => item.id === id);
+      // "code" nunca vem do cliente: gerado uma vez na criação (mesma regra do
+      // backend, ver generate_unit_code) e preservado em edições.
+      if (existing) {
+        existing.name = body.name;
+        existing.origin = body.origin;
+        existing.contact = body.contact ?? null;
+        return json(existing);
+      }
+      const prefix = body.origin === "Escola" ? "ESC" : "SED";
+      const usedNumbers = units
+        .map((item) => item.code.match(new RegExp(`^${prefix}-(\\d+)$`)))
+        .filter((match): match is RegExpMatchArray => match !== null)
+        .map((match) => Number(match[1]));
+      const nextNumber = (usedNumbers.length ? Math.max(...usedNumbers) : 0) + 1;
       const unit: MockUnit = {
-        id: body.id ?? body.name.toLowerCase().replace(/\s+/g, "-"),
+        id,
         name: body.name,
-        code: body.code,
+        code: `${prefix}-${String(nextNumber).padStart(3, "0")}`,
         origin: body.origin,
         contact: body.contact ?? null,
         active: true,
       };
       units.push(unit);
       return json(unit);
+    }
+
+    if (path === "/api/v1/people" && method === "POST") {
+      const body = JSON.parse(init.body as string);
+      const id = body.id ?? body.name.toLowerCase().replace(/\s+/g, "-");
+      const existing = people.find((item) => item.id === id);
+      if (existing) {
+        existing.name = body.name;
+        existing.registration_number = body.registration_number ?? "";
+        existing.phone = body.phone ?? "";
+        existing.unit_id = body.unit_id;
+        return json(existing);
+      }
+      const person: MockPerson = {
+        id,
+        name: body.name,
+        registration_number: body.registration_number ?? "",
+        phone: body.phone ?? "",
+        unit_id: body.unit_id,
+        active: true,
+      };
+      people.push(person);
+      return json(person);
+    }
+
+    const personActiveMatch = path.match(/^\/api\/v1\/people\/([^/]+)\/active$/);
+    if (personActiveMatch && method === "PATCH") {
+      const person = people.find((item) => item.id === personActiveMatch[1]);
+      if (!person) return json({ detail: "Pessoa não encontrada." }, 404);
+      const body = JSON.parse(init.body as string);
+      person.active = body.active;
+      return json(person);
+    }
+
+    const personMatch = path.match(/^\/api\/v1\/people\/([^/]+)$/);
+    if (personMatch && method === "DELETE") {
+      const index = people.findIndex((item) => item.id === personMatch[1]);
+      if (index >= 0) people.splice(index, 1);
+      return noContent();
     }
 
     if (path === "/api/v1/users" && method === "POST") {
@@ -374,5 +471,5 @@ export function installMockApi() {
   });
 
   vi.stubGlobal("fetch", fetchMock);
-  return { fetchMock, units, users, requests };
+  return { fetchMock, units, people, users, requests };
 }

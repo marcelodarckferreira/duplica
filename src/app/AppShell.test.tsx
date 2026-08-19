@@ -58,7 +58,7 @@ describe("AppShell user menu", () => {
     await login(user);
     await screen.findByRole("heading", { name: "Visão geral" });
 
-    for (const screenName of ["Solicitações", "Unidades", "Usuários", "Auditoria"]) {
+    for (const screenName of ["Solicitações", "Locais", "Usuários", "Auditoria"]) {
       await user.click(await screen.findByRole("button", { name: screenName }));
 
       mounted.unmount();
@@ -145,14 +145,14 @@ describe("AppShell user menu", () => {
     expect(confirmation.getAttribute("type")).toBe("password");
   });
 
-  it("filters requests by school", async () => {
+  it("filters requests by school via the search field", async () => {
     installMockApi();
     const user = userEvent.setup();
     renderShell();
 
     await login(user);
     await user.click(await screen.findByRole("button", { name: "Solicitações" }));
-    await user.selectOptions(await screen.findByLabelText("Escola"), "emef-ana-nery");
+    await user.type(await screen.findByPlaceholderText("Buscar por código, unidade, solicitante ou documento"), "Ana Nery");
 
     expect(screen.getByRole("row", { name: /EMEF Ana Nery/ })).toBeTruthy();
     expect(screen.queryByRole("row", { name: /EMEF Paulo Freire/ })).toBeNull();
@@ -166,16 +166,15 @@ describe("AppShell user menu", () => {
 
     await login(user);
     await user.click(await screen.findByRole("button", { name: "Solicitações" }));
-    await user.click(await screen.findByRole("button", { name: "Editar solicitação" }));
+    await user.click(await screen.findByRole("button", { name: "Editar CP-2026-0001" }));
 
-    const requester = screen.getByLabelText("Solicitante");
-    await user.clear(requester);
-    await user.type(requester, "Solicitante Editado");
+    await user.click(screen.getByRole("combobox", { name: "Pessoa" }));
+    await user.click(await screen.findByRole("option", { name: "Solicitante Editado" }));
     await user.click(screen.getByRole("button", { name: /salvar alterações/i }));
 
     expect(await screen.findByText("Solicitante Editado")).toBeTruthy();
 
-    await user.click(screen.getByRole("button", { name: "Excluir solicitação" }));
+    await user.click(screen.getByRole("button", { name: "Excluir CP-2026-0001" }));
     await user.click(await screen.findByRole("button", { name: "Excluir" }));
 
     await waitFor(() => {
