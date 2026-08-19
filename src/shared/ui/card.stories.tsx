@@ -13,7 +13,7 @@ export const Default: Story = {
   render: () => (
     <Card className="w-96">
       <CardHeader>
-        <CardTitle>Unidades escolares e setores</CardTitle>
+        <CardTitle>Locais</CardTitle>
         <CardDescription>6 cadastrados</CardDescription>
       </CardHeader>
       <p className="m-0 text-sm text-text">Conteúdo do card.</p>

@@ -6,6 +6,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Máscara progressiva de celular brasileiro: (21) 94698-8986.
+export function formatPhone(raw: string): string {
+  const digits = raw.replace(/\D/g, "").slice(0, 11);
+  if (digits.length <= 2) return digits;
+  if (digits.length <= 7) return `(${digits.slice(0, 2)}) ${digits.slice(2)}`;
+  return `(${digits.slice(0, 2)}) ${digits.slice(2, 7)}-${digits.slice(7)}`;
+}
+
 // Onde portar conteúdo dos primitivos Radix (Dialog/Select/DropdownMenu).
 // Sem isso, o Portal do Radix renderiza em document.body por padrão — fora
 // da div#theme-root que define as CSS custom properties de cor (--surface,

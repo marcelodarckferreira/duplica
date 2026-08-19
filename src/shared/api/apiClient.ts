@@ -36,6 +36,20 @@ export class ApiError extends Error {
   }
 }
 
+// Notifica a aplicação quando uma sessão já autenticada deixa de ser válida
+// (token expirado/revogado no meio do uso — não a tentativa de login em si,
+// que trata seu próprio 401 sem passar por aqui, ver guarda abaixo). Sem
+// isso, uma query em segundo plano (ex.: dashboard) recebia 401 e só
+// mostrava o texto cru do erro, deixando a tela como se o usuário ainda
+// estivesse logado.
+type UnauthorizedListener = () => void;
+const unauthorizedListeners = new Set<UnauthorizedListener>();
+
+export function onUnauthorized(listener: UnauthorizedListener): () => void {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
+}
+
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
   const headers = new Headers(options.headers);
   if (token) {
@@ -58,6 +72,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
 
   if (!response.ok) {
     const detail = await response.json().catch(() => null);
+    if (response.status === 401 && path !== "/api/v1/auth/token") {
+      setToken(null);
+      unauthorizedListeners.forEach((listener) => listener());
+    }
     throw new ApiError(detail?.detail ?? "Erro na requisição.", response.status);
   }
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { createUsersRepository } from "../api/repository";
-import { UserDraft } from "./types";
+import { Permission, UserDraft, UserRole } from "./types";
 
 const usersRepo = createUsersRepository();
 
@@ -8,10 +8,15 @@ export const usersKeys = {
   all: ["users"] as const,
 };
 
-export function useUsersQuery() {
+export const rolePermissionsKeys = {
+  all: ["rolePermissions"] as const,
+};
+
+export function useUsersQuery(enabled: boolean) {
   return useQuery({
     queryKey: usersKeys.all,
     queryFn: () => usersRepo.getUsers(),
+    enabled,
   });
 }
 
@@ -61,5 +66,22 @@ export function useChangePasswordMutation() {
     mutationFn: (payload: { currentPassword: string; newPassword: string; name: string; email: string }) =>
       usersRepo.changePassword(payload),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: usersKeys.all }),
+  });
+}
+
+export function useRolePermissionsQuery(enabled: boolean) {
+  return useQuery({
+    queryKey: rolePermissionsKeys.all,
+    queryFn: () => usersRepo.getRolePermissions(),
+    enabled,
+  });
+}
+
+export function useUpdateRolePermissionsMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ role, permissions }: { role: UserRole; permissions: Permission[] }) =>
+      usersRepo.updateRolePermissions(role, permissions),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: rolePermissionsKeys.all }),
   });
 }

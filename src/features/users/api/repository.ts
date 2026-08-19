@@ -1,5 +1,10 @@
 import { apiAssetUrl, ApiError, apiFetch, getToken, setToken } from "../../../shared/api/apiClient";
-import { User, UserDraft } from "../model/types";
+import { Permission, User, UserDraft, UserRole } from "../model/types";
+
+interface RolePermissionsPayload {
+  role: string;
+  permissions: string[];
+}
 
 interface UserApiPayload {
   id: string;
@@ -135,6 +140,23 @@ export function createUsersRepository() {
         }),
       });
       return mapUser(result);
+    },
+
+    async getRolePermissions(): Promise<Record<UserRole, Permission[]>> {
+      const rows = await apiFetch<RolePermissionsPayload[]>("/api/v1/roles/permissions");
+      const map = {} as Record<UserRole, Permission[]>;
+      for (const row of rows) {
+        map[row.role as UserRole] = row.permissions as Permission[];
+      }
+      return map;
+    },
+
+    async updateRolePermissions(role: UserRole, permissions: Permission[]): Promise<Permission[]> {
+      const result = await apiFetch<RolePermissionsPayload>(`/api/v1/roles/${role}/permissions`, {
+        method: "PUT",
+        body: JSON.stringify({ permissions }),
+      });
+      return result.permissions as Permission[];
     },
   };
 }

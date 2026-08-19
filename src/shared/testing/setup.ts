@@ -11,6 +11,22 @@ Object.defineProperty(window, "ResizeObserver", {
   configurable: true,
 });
 
+// jsdom também não implementa a Pointer Capture API nem scrollIntoView; o
+// Radix Select as usa ao abrir/selecionar item via ponteiro (clique real do
+// user-event), sem os stubs a interação lança "not a function" em teste.
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false;
+}
+if (!Element.prototype.setPointerCapture) {
+  Element.prototype.setPointerCapture = () => {};
+}
+if (!Element.prototype.releasePointerCapture) {
+  Element.prototype.releasePointerCapture = () => {};
+}
+if (!Element.prototype.scrollIntoView) {
+  Element.prototype.scrollIntoView = () => {};
+}
+
 const store = new Map<string, string>();
 
 Object.defineProperty(window, "localStorage", {

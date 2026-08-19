@@ -15,6 +15,8 @@ const badgeVariants = cva(
         role: "text-accent-strong bg-surface-soft",
         active: "text-status-pronto-fg bg-status-pronto-bg",
         inactive: "text-status-cancelado-fg bg-status-cancelado-bg",
+        urgente: "text-priority-urgente-fg bg-priority-urgente-bg",
+        institucional: "text-priority-institucional-fg bg-priority-institucional-bg",
       },
     },
     defaultVariants: {

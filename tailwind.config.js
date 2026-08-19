@@ -35,6 +35,10 @@ export default {
         "status-entregue-bg": "var(--status-entregue-bg)",
         "status-cancelado-fg": "var(--status-cancelado-fg)",
         "status-cancelado-bg": "var(--status-cancelado-bg)",
+        "priority-urgente-fg": "var(--priority-urgente-fg)",
+        "priority-urgente-bg": "var(--priority-urgente-bg)",
+        "priority-institucional-fg": "var(--priority-institucional-fg)",
+        "priority-institucional-bg": "var(--priority-institucional-bg)",
       },
       borderRadius: {
         DEFAULT: "7px",

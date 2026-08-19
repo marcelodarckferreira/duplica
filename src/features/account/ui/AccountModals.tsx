@@ -1,7 +1,8 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
-import { useState } from "react";
+import { Camera, Eye, EyeOff } from "lucide-react";
+import { ChangeEvent, useState } from "react";
 import { useForm } from "react-hook-form";
+import { Avatar } from "../../../shared/ui/avatar";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../shared/ui/dialog";
 import { ChangePasswordInput, changePasswordSchema, ProfileInput, profileSchema } from "../../users/schemas/schema";
 import { User } from "../../users/model/types";
@@ -16,9 +17,12 @@ export function AccountModal(props: {
   user: User;
   onClose: () => void;
   onSave: (payload: { name: string; email: string }) => Promise<void>;
+  onUploadAvatar: (userId: string, file: File) => Promise<void>;
 }) {
-  const { open, user, onClose, onSave } = props;
+  const { open, user, onClose, onSave, onUploadAvatar } = props;
   const [error, setError] = useState("");
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const [avatarError, setAvatarError] = useState("");
 
   const {
     register,
@@ -39,12 +43,49 @@ export function AccountModal(props: {
     }
   }
 
+  async function handleAvatarChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    setAvatarError("");
+    setIsUploadingAvatar(true);
+    try {
+      await onUploadAvatar(user.id, file);
+    } catch (err) {
+      setAvatarError(err instanceof Error ? err.message : "Não foi possível enviar a imagem.");
+    } finally {
+      setIsUploadingAvatar(false);
+    }
+  }
+
   return (
     <Dialog open={open} onOpenChange={(next) => !next && onClose()}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Minha conta</DialogTitle>
         </DialogHeader>
+        <div className="mb-1 flex items-center gap-4">
+          <span className="relative inline-block h-[72px] w-[72px] shrink-0">
+            <Avatar name={user.name} avatarUrl={user.avatarUrl} size={72} />
+            <label
+              className="absolute -bottom-0.5 -right-0.5 grid h-7 w-7 cursor-pointer place-items-center rounded-full border-2 border-surface bg-accent-strong text-white hover:opacity-90"
+              aria-label="Alterar foto do usuário"
+            >
+              <Camera size={14} />
+              <input
+                type="file"
+                accept="image/png,image/jpeg,image/webp"
+                onChange={handleAvatarChange}
+                disabled={isUploadingAvatar}
+                className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+              />
+            </label>
+          </span>
+          <div>
+            <p className="m-0 text-sm text-muted">{isUploadingAvatar ? "Enviando…" : "PNG, JPEG ou WEBP até 2 MB."}</p>
+            {avatarError && <p className="m-0 font-bold text-[#a43b2f]">{avatarError}</p>}
+          </div>
+        </div>
         <form onSubmit={handleSubmit(submit)} className="grid gap-3.5">
           <label className="grid gap-1.5 text-sm font-bold text-label">
             Nome

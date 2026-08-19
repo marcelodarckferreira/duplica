@@ -5,7 +5,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.deps import require_permission
+from app.core.deps import get_current_user, require_permission
+from app.core.permissions import can_perform
 from app.core.security import hash_password
 from app.db.base import get_db
 from app.db.models.user import User
@@ -127,8 +128,14 @@ async def upload_user_avatar(
     user_id: str,
     file: UploadFile,
     db: AsyncSession = Depends(get_db),
-    _user=Depends(require_permission("manageUsers")),
+    current_user: User = Depends(get_current_user),
 ) -> User:
+    # Qualquer conta pode trocar a própria foto (tela "Minha conta"); trocar a
+    # foto de outra pessoa continua exigindo manageUsers, como as demais ações
+    # de administração de usuários.
+    if user_id != current_user.id and not await can_perform(db, current_user.role, "manageUsers"):
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Sem permissão para esta ação.")
+
     target = await db.get(User, user_id)
     if target is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuário não encontrado.")
