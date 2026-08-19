@@ -16,7 +16,7 @@ const baseRequest: CopyRequest = {
   duplex: true,
   printedFaces: 150,
   consumedSheets: 90,
-  paper: "A4",
+  paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
   colorMode: "P&B",
   priority: "Normal",
   desiredDeadline: "2026-08-15",
@@ -26,6 +26,7 @@ const baseRequest: CopyRequest = {
   producedAt: "",
   deliveredAt: "",
   pickedUpBy: "",
+  signature: "",
   notes: "",
   history: [{ status: "Recebido", date: "2026-08-10", by: "Carlos" }],
 };
@@ -47,12 +48,12 @@ describe("requests domain rules", () => {
     const requests = [
       baseRequest,
       { ...baseRequest, id: "2", unitId: "u2", unitName: "EMEF Ana Nery", status: "Pronto" as const },
-      { ...baseRequest, id: "3", origin: "Sede SEMED" as const, unitId: "u3", unitName: "Sede - RH" },
+      { ...baseRequest, id: "3", origin: "Setor SEMED" as const, unitId: "u3", unitName: "Sede - RH" },
     ];
 
     expect(filterRequests(requests, { query: "ana nery", status: "Todos", origin: "Todas", unitId: "Todas" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Pronto", origin: "Todas", unitId: "Todas" })).toHaveLength(1);
-    expect(filterRequests(requests, { query: "", status: "Todos", origin: "Sede SEMED", unitId: "Todas" })).toHaveLength(1);
+    expect(filterRequests(requests, { query: "", status: "Todos", origin: "Setor SEMED", unitId: "Todas" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Todos", origin: "Todas", unitId: "u1" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Todos", origin: "Todas", unitId: "Todas" })).toHaveLength(3);
   });

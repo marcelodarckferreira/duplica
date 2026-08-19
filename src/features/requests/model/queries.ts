@@ -8,10 +8,11 @@ export const requestsKeys = {
   all: ["requests"] as const,
 };
 
-export function useRequestsQuery() {
+export function useRequestsQuery(enabled: boolean) {
   return useQuery({
     queryKey: requestsKeys.all,
     queryFn: () => requestsRepo.getRequests(),
+    enabled,
   });
 }
 
@@ -26,7 +27,7 @@ export function useCreateRequestMutation() {
 export function useUpdateRequestMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, draft }: { id: string; draft: Partial<RequestDraft & Pick<CopyRequest, "pickedUpBy">> }) =>
+    mutationFn: ({ id, draft }: { id: string; draft: Partial<RequestDraft & Pick<CopyRequest, "pickedUpBy" | "signature">> }) =>
       requestsRepo.updateRequest(id, draft),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: requestsKeys.all }),
   });
@@ -43,8 +44,17 @@ export function useDeleteRequestMutation() {
 export function useUpdateRequestStatusMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, status, pickedUpBy }: { id: string; status: RequestStatus; pickedUpBy?: string }) =>
-      requestsRepo.updateStatus(id, status, pickedUpBy),
+    mutationFn: ({ id, status, pickedUpBy, signature }: { id: string; status: RequestStatus; pickedUpBy?: string; signature?: string }) =>
+      requestsRepo.updateStatus(id, status, pickedUpBy, signature),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: requestsKeys.all }),
+  });
+}
+
+export function useDeleteHistoryEntryMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ requestId, entryId }: { requestId: string; entryId: number }) =>
+      requestsRepo.deleteHistoryEntry(requestId, entryId),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: requestsKeys.all }),
   });
 }

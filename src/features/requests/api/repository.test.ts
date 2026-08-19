@@ -15,7 +15,7 @@ const apiRequest = {
   duplex: true,
   printed_faces: 150,
   consumed_sheets: 90,
-  paper: "A4",
+  paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
   color_mode: "P&B",
   priority: "Normal",
   desired_deadline: "2026-08-15",
@@ -25,6 +25,7 @@ const apiRequest = {
   produced_at: "",
   delivered_at: "",
   picked_up_by: "",
+  signature: "",
   notes: "",
   history: [{ status: "Recebido", date: "2026-08-10", by: "Carlos" }],
 };
@@ -74,7 +75,7 @@ describe("requests repository", () => {
       pages: 5,
       copies: 30,
       duplex: true,
-      paper: "A4",
+      paper: "A4 (8.2 x 11.7 in; 210 x 297 mm)",
       colorMode: "P&B",
       priority: "Normal",
       desiredDeadline: "2026-08-15",
@@ -97,7 +98,7 @@ describe("requests repository", () => {
     const [url, requestInit] = fetchMock.mock.calls[0];
     expect(url).toContain("/api/v1/requests/req-1/status");
     expect(requestInit.method).toBe("PATCH");
-    expect(JSON.parse(requestInit.body)).toEqual({ status: "Pronto", picked_up_by: null });
+    expect(JSON.parse(requestInit.body)).toEqual({ status: "Pronto", picked_up_by: null, signature: null });
     expect(updated?.status).toBe("Pronto");
   });
 

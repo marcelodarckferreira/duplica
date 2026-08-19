@@ -2,6 +2,7 @@ import { apiFetch } from "../../../shared/api/apiClient";
 import { CopyRequest, RequestDraft, RequestStatus, StatusHistoryEntry } from "../model/types";
 
 interface ApiStatusHistoryEntry {
+  id: number;
   status: string;
   date: string;
   by: string;
@@ -14,11 +15,14 @@ interface ApiCopyRequest {
   unit_id: string;
   unit_name: string;
   requester: string;
+  registration_number: string;
   contact: string;
   document_description: string;
   pages: number;
   copies: number;
   duplex: boolean;
+  staple: string;
+  layout: string;
   printed_faces: number;
   consumed_sheets: number;
   paper: string;
@@ -31,12 +35,13 @@ interface ApiCopyRequest {
   produced_at: string;
   delivered_at: string;
   picked_up_by: string;
+  signature: string;
   notes: string;
   history: ApiStatusHistoryEntry[];
 }
 
 function mapHistory(history: ApiStatusHistoryEntry[]): StatusHistoryEntry[] {
-  return history.map((entry) => ({ status: entry.status as RequestStatus, date: entry.date, by: entry.by }));
+  return history.map((entry) => ({ id: entry.id, status: entry.status as RequestStatus, date: entry.date, by: entry.by }));
 }
 
 function mapRequest(api: ApiCopyRequest): CopyRequest {
@@ -47,11 +52,14 @@ function mapRequest(api: ApiCopyRequest): CopyRequest {
     unitId: api.unit_id,
     unitName: api.unit_name,
     requester: api.requester,
+    registrationNumber: api.registration_number,
     contact: api.contact,
     documentDescription: api.document_description,
     pages: api.pages,
     copies: api.copies,
     duplex: api.duplex,
+    staple: api.staple as CopyRequest["staple"],
+    layout: api.layout as CopyRequest["layout"],
     printedFaces: api.printed_faces,
     consumedSheets: api.consumed_sheets,
     paper: api.paper as CopyRequest["paper"],
@@ -64,6 +72,7 @@ function mapRequest(api: ApiCopyRequest): CopyRequest {
     producedAt: api.produced_at,
     deliveredAt: api.delivered_at,
     pickedUpBy: api.picked_up_by,
+    signature: api.signature,
     notes: api.notes,
     history: mapHistory(api.history),
   };
@@ -74,11 +83,14 @@ function mapDraftBody(draft: RequestDraft) {
     origin: draft.origin,
     unit_id: draft.unitId,
     requester: draft.requester,
+    registration_number: draft.registrationNumber,
     contact: draft.contact,
     document_description: draft.documentDescription,
     pages: draft.pages,
     copies: draft.copies,
     duplex: draft.duplex,
+    staple: draft.staple,
+    layout: draft.layout,
     paper: draft.paper,
     color_mode: draft.colorMode,
     priority: draft.priority,
@@ -105,17 +117,20 @@ export function createRequestsRepository() {
 
     async updateRequest(
       id: string,
-      patch: Partial<RequestDraft & Pick<CopyRequest, "pickedUpBy">>,
+      patch: Partial<RequestDraft & Pick<CopyRequest, "pickedUpBy" | "signature">>,
     ): Promise<CopyRequest | null> {
       const body: Record<string, unknown> = {};
       if (patch.origin !== undefined) body.origin = patch.origin;
       if (patch.unitId !== undefined) body.unit_id = patch.unitId;
       if (patch.requester !== undefined) body.requester = patch.requester;
+      if (patch.registrationNumber !== undefined) body.registration_number = patch.registrationNumber;
       if (patch.contact !== undefined) body.contact = patch.contact;
       if (patch.documentDescription !== undefined) body.document_description = patch.documentDescription;
       if (patch.pages !== undefined) body.pages = patch.pages;
       if (patch.copies !== undefined) body.copies = patch.copies;
       if (patch.duplex !== undefined) body.duplex = patch.duplex;
+      if (patch.staple !== undefined) body.staple = patch.staple;
+      if (patch.layout !== undefined) body.layout = patch.layout;
       if (patch.paper !== undefined) body.paper = patch.paper;
       if (patch.colorMode !== undefined) body.color_mode = patch.colorMode;
       if (patch.priority !== undefined) body.priority = patch.priority;
@@ -123,6 +138,7 @@ export function createRequestsRepository() {
       if (patch.productionOwner !== undefined) body.production_owner = patch.productionOwner;
       if (patch.notes !== undefined) body.notes = patch.notes;
       if (patch.pickedUpBy !== undefined) body.picked_up_by = patch.pickedUpBy;
+      if (patch.signature !== undefined) body.signature = patch.signature;
 
       const result = await apiFetch<ApiCopyRequest>(`/api/v1/requests/${id}`, {
         method: "PUT",
@@ -136,10 +152,17 @@ export function createRequestsRepository() {
       return true;
     },
 
-    async updateStatus(id: string, status: RequestStatus, pickedUpBy = ""): Promise<CopyRequest | null> {
+    async updateStatus(id: string, status: RequestStatus, pickedUpBy = "", signature = ""): Promise<CopyRequest | null> {
       const result = await apiFetch<ApiCopyRequest>(`/api/v1/requests/${id}/status`, {
         method: "PATCH",
-        body: JSON.stringify({ status, picked_up_by: pickedUpBy || null }),
+        body: JSON.stringify({ status, picked_up_by: pickedUpBy || null, signature: signature || null }),
+      });
+      return mapRequest(result);
+    },
+
+    async deleteHistoryEntry(requestId: string, entryId: number): Promise<CopyRequest> {
+      const result = await apiFetch<ApiCopyRequest>(`/api/v1/requests/${requestId}/history/${entryId}`, {
+        method: "DELETE",
       });
       return mapRequest(result);
     },
