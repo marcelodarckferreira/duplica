@@ -995,7 +995,9 @@ export function RequestsView(props: {
         </div>
         {request.status === "Entregue" && request.signature && (
           <div>
-            <h3 className="m-0 mb-2 text-center text-sm font-bold uppercase text-muted">Assinatura de quem retirou</h3>
+            <h3 className="m-0 mb-2 text-center text-sm font-bold uppercase text-muted">
+              {request.pickedUpBy ? `Assinado por: ${request.pickedUpBy}` : "Assinatura de quem retirou"}
+            </h3>
             <div className="mx-auto h-28 w-64 rounded border border-border-soft bg-white p-1.5">
               <img src={request.signature} alt={`Assinatura de ${request.pickedUpBy}`} className="h-full w-full object-contain" />
             </div>
