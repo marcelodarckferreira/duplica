@@ -50,6 +50,16 @@ async def update_role_permissions(
             detail="Não é possível alterar as permissões do próprio perfil.",
         )
 
+    # O perfil Admin é o superusuário do sistema e nunca é editável por
+    # ninguém (nem por outro Admin, que cairia no bloqueio acima) — sem essa
+    # trava, um Gerente com manageUsers poderia remover manageAudit/manageUsers
+    # do Admin através desta rota, já que role != current_user.role para ele.
+    if role == "Admin":
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="As permissões do perfil Admin não podem ser alteradas.",
+        )
+
     # Guarda de segurança: pelo menos um perfil no sistema precisa manter
     # manageUsers, senão ninguém mais consegue acessar Usuários/Perfis de
     # Acesso para corrigir isso depois (ficaria só editável direto no banco).

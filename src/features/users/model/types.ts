@@ -6,6 +6,7 @@ export type Permission =
   | "editRequests"
   | "updateProduction"
   | "manageUnits"
+  | "managePeople"
   | "manageUsers"
   | "manageAudit";
 

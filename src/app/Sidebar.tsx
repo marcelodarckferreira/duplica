@@ -1,7 +1,8 @@
-import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
+import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, RefreshCw, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
 import { useState } from "react";
 import { cn } from "../shared/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../shared/ui/dropdown-menu";
+import { Switch } from "../shared/ui/switch";
 import { User } from "../features/users/model/types";
 import { AccountModal, ChangePasswordModal } from "../features/account/ui/AccountModals";
 import { LogoMark } from "./Logo";
@@ -41,6 +42,8 @@ export function Sidebar(props: {
   onUpdateProfile: (payload: { name: string; email: string }) => Promise<void>;
   onChangePassword: (payload: { currentPassword: string; newPassword: string }) => Promise<void>;
   onUploadAvatar: (userId: string, file: File) => Promise<void>;
+  isDashboardAutoSyncOn: boolean;
+  onToggleDashboardAutoSync: () => void;
 }) {
   const {
     activeView,
@@ -54,6 +57,8 @@ export function Sidebar(props: {
     onUpdateProfile,
     onChangePassword,
     onUploadAvatar,
+    isDashboardAutoSyncOn,
+    onToggleDashboardAutoSync,
   } = props;
   const [collapsed, setCollapsed] = useState(
     () => window.localStorage.getItem(COLLAPSE_STORAGE_KEY) === "1",
@@ -185,6 +190,21 @@ export function Sidebar(props: {
             <DropdownMenuItem onSelect={() => setIsPasswordModalOpen(true)}>
               <Key size={16} />
               Alterar senha
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuLabel>Configurações</DropdownMenuLabel>
+            <DropdownMenuItem
+              onSelect={(event) => {
+                event.preventDefault();
+                onToggleDashboardAutoSync();
+              }}
+              className="justify-between gap-3"
+            >
+              <span className="flex min-w-0 items-center gap-2">
+                <RefreshCw size={16} className="shrink-0" />
+                <span className="truncate">Sync do dashboard</span>
+              </span>
+              <Switch checked={isDashboardAutoSyncOn} className="pointer-events-none shrink-0" tabIndex={-1} aria-hidden="true" />
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Tema</DropdownMenuLabel>

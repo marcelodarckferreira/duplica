@@ -44,6 +44,7 @@ import { filterRequests } from "../features/requests/model/rules";
 import { CopyRequest, RequestDraft, RequestStatus } from "../features/requests/model/types";
 import { RequestsView } from "../features/requests/ui/RequestsView";
 import {
+  requestsKeys,
   useCreateRequestMutation,
   useDeleteHistoryEntryMutation,
   useDeleteRequestMutation,
@@ -76,6 +77,7 @@ export function AppShell() {
   const [loginError, setLoginError] = useState("");
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [activeView, setActiveView] = useState<View>("dashboard");
+  const [isDashboardAutoSyncOn, setIsDashboardAutoSyncOn] = useState(false);
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "Todos">("Todos");
   const [originFilter, setOriginFilter] = useState<Origin | "Todas">("Todas");
@@ -207,6 +209,18 @@ export function AppShell() {
     media.addEventListener("change", handleChange);
     return () => media.removeEventListener("change", handleChange);
   }, []);
+
+  // Sincronização automática do dashboard (botão "sync temporal") — refaz a
+  // busca de solicitações a cada 30s enquanto ligada, para o painel se manter
+  // atualizado com o que outros operadores estão lançando; desligada por
+  // padrão para não gerar tráfego de fundo sem o usuário pedir.
+  useEffect(() => {
+    if (!isDashboardAutoSyncOn) return;
+    const intervalId = window.setInterval(() => {
+      queryClient.refetchQueries({ queryKey: requestsKeys.all });
+    }, 30_000);
+    return () => window.clearInterval(intervalId);
+  }, [isDashboardAutoSyncOn, queryClient]);
 
   // Recolhe a linha expandida se ela sair da lista filtrada (ex.: usuário
   // trocou o filtro de status/origem/escola) — nunca expande a primeira por
@@ -358,7 +372,7 @@ export function AppShell() {
   }
 
   async function handleSavePerson(values: PersonDraftInput) {
-    if (!user || !canPerform(user.role, "manageUnits")) return;
+    if (!user || !canPerform(user.role, "managePeople")) return;
     try {
       const id = editingPersonId || generateUnitId(`${values.name}-${values.unitId}`);
       const saved = await savePersonMutation.mutateAsync({ ...values, id });
@@ -381,7 +395,7 @@ export function AppShell() {
   }
 
   function handleStartCreatePerson() {
-    if (!user || !canPerform(user.role, "manageUnits")) return;
+    if (!user || !canPerform(user.role, "managePeople")) return;
     setEditingPersonId("");
     setPersonMessage("");
     setIsCreatingPerson(true);
@@ -399,13 +413,13 @@ export function AppShell() {
   }
 
   async function handleTogglePersonActive(selected: Person) {
-    if (!user || !canPerform(user.role, "manageUnits")) return;
+    if (!user || !canPerform(user.role, "managePeople")) return;
     await togglePersonActiveMutation.mutateAsync({ id: selected.id, active: !selected.active });
     setPersonMessage(`${selected.name} ${selected.active ? "desativada" : "ativada"}.`);
   }
 
   async function handleDeletePerson(selected: Person) {
-    if (!user || !canPerform(user.role, "manageUnits")) return;
+    if (!user || !canPerform(user.role, "managePeople")) return;
     try {
       await deletePersonMutation.mutateAsync(selected.id);
       setPersonMessage(`Pessoa ${selected.name} excluída.`);
@@ -539,6 +553,8 @@ export function AppShell() {
         onUpdateProfile={handleUpdateProfile}
         onChangePassword={handleChangePassword}
         onUploadAvatar={handleUploadAvatar}
+        isDashboardAutoSyncOn={isDashboardAutoSyncOn}
+        onToggleDashboardAutoSync={() => setIsDashboardAutoSyncOn((current) => !current)}
       />
 
       <main className="min-w-0 flex-1 overflow-x-hidden bg-page p-[18px] sm:p-7">
@@ -567,6 +583,9 @@ export function AppShell() {
                   setSelectedRequestId(id);
                   setActiveView("requests");
                 }}
+                onSync={() => requestsQuery.refetch()}
+                isSyncing={requestsQuery.isFetching}
+                lastSyncedAt={requestsQuery.dataUpdatedAt}
               />
             )}
 
@@ -600,6 +619,8 @@ export function AppShell() {
                 onDeleteHistoryEntry={handleDeleteHistoryEntry}
                 onCreateUnit={handleQuickCreateUnit}
                 onCreatePerson={handleQuickCreatePerson}
+                onSync={() => requestsQuery.refetch()}
+                isSyncing={requestsQuery.isFetching}
               />
             )}
 
@@ -628,7 +649,7 @@ export function AppShell() {
                 editingPerson={editingPerson}
                 personMessage={personMessage}
                 mode={isCreatingPerson || editingPersonId ? "form" : "list"}
-                canManage={canPerform(user.role, "manageUnits")}
+                canManage={canPerform(user.role, "managePeople")}
                 onStartCreate={handleStartCreatePerson}
                 onSubmit={handleSavePerson}
                 onEditPerson={handleEditPerson}

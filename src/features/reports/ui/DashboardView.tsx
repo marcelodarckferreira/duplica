@@ -1,7 +1,9 @@
-import { CheckCircle2, ClipboardList, Clock3, FileText, Printer } from "lucide-react";
+import { CheckCircle2, ClipboardList, Clock3, FileText, Printer, RefreshCw } from "lucide-react";
 import { ReactNode } from "react";
+import { Button } from "../../../shared/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { PrintButton, PrintReportHeader } from "../../../shared/ui/print-report";
+import { cn } from "../../../shared/lib/utils";
 import { RequestTable } from "../../requests/ui/RequestsView";
 import { CopyRequest } from "../../requests/model/types";
 import { formatNumber } from "../../requests/model/rules";
@@ -40,8 +42,21 @@ export function DashboardView(props: {
   consumptionRanking: ReturnType<typeof getUnitConsumptionRanking>;
   recentRequests: CopyRequest[];
   onSelectRequest: (id: string) => void;
+  onSync: () => void;
+  isSyncing: boolean;
+  lastSyncedAt: number;
 }) {
-  const { metrics, ranking, monthly, consumptionRanking, recentRequests, onSelectRequest } = props;
+  const {
+    metrics,
+    ranking,
+    monthly,
+    consumptionRanking,
+    recentRequests,
+    onSelectRequest,
+    onSync,
+    isSyncing,
+    lastSyncedAt,
+  } = props;
 
   return (
     <>
@@ -49,7 +64,16 @@ export function DashboardView(props: {
         title="Relatório de Consolidação"
         subtitle={`${formatNumber(metrics.totalRequests)} solicitações no período — ${formatNumber(metrics.totalSheets)} folhas / ${metrics.estimatedReams.toLocaleString("pt-BR")} resmas`}
       />
-      <div className="mb-4 flex justify-end print:hidden">
+      <div className="mb-4 flex flex-wrap items-center justify-end gap-3 print:hidden">
+        {lastSyncedAt > 0 && (
+          <span className="text-xs text-muted">
+            Atualizado às {new Intl.DateTimeFormat("pt-BR", { timeStyle: "medium" }).format(new Date(lastSyncedAt))}
+          </span>
+        )}
+        <Button type="button" variant="soft" onClick={onSync} disabled={isSyncing}>
+          <RefreshCw size={17} className={cn(isSyncing && "animate-spin")} />
+          Sincronizar
+        </Button>
         <PrintButton label="Imprimir relatório" />
       </div>
 

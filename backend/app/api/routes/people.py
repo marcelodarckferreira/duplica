@@ -26,7 +26,7 @@ async def list_people(
 async def save_person(
     payload: PersonSave,
     db: AsyncSession = Depends(get_db),
-    _user=Depends(require_permission("manageUnits")),
+    _user=Depends(require_permission("managePeople")),
 ) -> Person:
     person_id = payload.id or generate_unit_id(f"{payload.name}-{payload.unit_id}")
     person = await db.get(Person, person_id)
@@ -49,7 +49,7 @@ async def toggle_person_active(
     person_id: str,
     payload: PersonToggleActive,
     db: AsyncSession = Depends(get_db),
-    _user: User = Depends(require_permission("manageUnits")),
+    _user: User = Depends(require_permission("managePeople")),
 ) -> Person:
     person = await db.get(Person, person_id)
     if person is None:
@@ -65,7 +65,7 @@ async def toggle_person_active(
 async def delete_person(
     person_id: str,
     db: AsyncSession = Depends(get_db),
-    _user: User = Depends(require_permission("manageUnits")),
+    _user: User = Depends(require_permission("managePeople")),
 ) -> None:
     person = await db.get(Person, person_id)
     if person is None:

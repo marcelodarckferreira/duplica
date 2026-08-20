@@ -129,13 +129,14 @@ Segue o mesmo padrão visual do `UserSettingsMenu.tsx` do ForgeHub (avatar circu
 - **Frontend:** `User.avatarUrl` (`src/features/users/model/types.ts`), avatar exibido (imagem ou iniciais como fallback) na lista de contas, no formulário de edição e no menu de conta da sidebar (`Sidebar.tsx`) — os três lugares onde o ForgeHub também mostra o avatar do usuário.
 
 ### 3.10 Papel Gerente (2026-08-10, a pedido explícito)
-Quarto papel além de Admin/Operador/Consulta, fixo no código (não é configurável via UI — ver §3.12). Tem as mesmas permissões do Admin **exceto** `manageAudit`: `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`. Motivação explícita do usuário: "somente o usuário com perfil de gerente e administrador tem direito de criar usuário" — ou seja, Gerente e Admin são os dois papéis que podem gerenciar contas; só Admin limpa o log de auditoria. Definido em `backend/app/core/permissions.py` (`ROLE_PERMISSIONS`) e `src/features/users/model/rules.ts` (`ROLE_PERMISSIONS`, exportado para a tela de Perfis de Acesso — ver §3.12).
+Quarto papel além de Admin/Operador/Consulta, fixo no código (não é configurável via UI — ver §3.12). Tem as mesmas permissões do Admin **exceto** `manageAudit`: `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `managePeople`, `manageUsers`. Motivação explícita do usuário: "somente o usuário com perfil de gerente e administrador tem direito de criar usuário" — ou seja, Gerente e Admin são os dois papéis que podem gerenciar contas; só Admin limpa o log de auditoria. Definido em `backend/app/core/permissions.py` (`ROLE_PERMISSIONS`) e `src/features/users/model/rules.ts` (`ROLE_PERMISSIONS`, exportado para a tela de Perfis de Acesso — ver §3.12).
 
 ### 3.11 Login por usuário ou e-mail (2026-08-10, a pedido explícito)
 Toda conta agora tem um `username` (coluna `users.username`, único, obrigatório, `backend/app/db/models/user.py`) além do `email` — mesmo padrão do ForgeHub. O login (`POST /api/v1/auth/token`) aceita **qualquer um dos dois** no mesmo campo (`identifier`), consultando `User.email == identifier OR User.username == identifier`. O campo de login no frontend (`LoginView.tsx`) mudou de `type="email"` para `type="text"` — obrigatório, já que um username como `admin` não é um e-mail válido para a validação nativa do navegador. Migração `e4687d66643b_add_username_to_users.py` faz backfill de `username` a partir do prefixo do e-mail (`split_part(email, '@', 1)`) antes de aplicar `NOT NULL`/`UNIQUE`, para não quebrar contas já existentes.
 
 ### 3.12 Perfis de acesso (2026-08-10, a pedido explícito, padrão ForgeHub)
-Item "Perfis de Acesso" no grupo Administração da sidebar (`src/features/users/ui/AccessProfilesView.tsx`), visível para quem tem `manageUsers`. Mostra uma matriz fixa (papel × permissão, ✓/—) dos 4 papéis — **somente leitura**: não é possível criar papéis novos nem alternar permissões pela UI (decisão explícita do usuário: "fixo no código", não dinâmico via banco — ver também §3.10). Fonte de verdade da matriz é `ROLE_PERMISSIONS` de `src/features/users/model/rules.ts`, a mesma usada por `canPerform()`.
+Item "Perfis de Acesso" no grupo Administração da sidebar (`src/features/users/ui/AccessProfilesView.tsx`), visível para quem tem `manageUsers`. Mostra uma matriz (papel × permissão, ✓/—) dos 4 papéis fixos. **Editável desde a tabela `role_permissions`** (migração `07_..._add_role_permissions_table.py`, ver §3.6/backend) — cada perfil pode ter suas permissões alteradas em tela (ícone de lápis por coluna), exceto o próprio perfil de quem está logado (auto-exclusão de `manageUsers`) e o perfil **Admin**, que nunca é editável por ninguém (2026-08-20 — sem essa trava um Gerente com `manageUsers` conseguia remover permissões do Admin, já que `role != current_user.role` para ele). `PUT /api/v1/roles/{role}/permissions` (`backend/app/api/routes/roles.py`) aplica as duas travas. O fallback estático `ROLE_PERMISSIONS` de `src/features/users/model/rules.ts` (mesma lista usada por `canPerform()` no frontend) só serve de default/seed inicial — a tabela é a fonte de verdade em runtime.
+- **`managePeople` (2026-08-20):** a tela Pessoas usava `manageUnits` emprestado (sem linha própria na matriz). Agora tem permissão dedicada — migração `14_..._add_manage_people_permission.py` concede `managePeople` a todo perfil que já tinha `manageUnits`, preservando o acesso existente.
 
 ### 3.13 Menu de conta: perfil próprio, senha e tema (2026-08-10, a pedido explícito, padrão ForgeHub)
 O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeHub: seção "Conta" (Minha conta / Alterar senha) + seção "Tema" (Claro/Escuro/Sistema, com check no ativo) + Sair.
@@ -188,7 +189,7 @@ Campos: `status`, `date`, `by`.
 ### 4.4 User (Usuário)
 Campos: `id`, `username` (único, usado no login junto com `email` — ver §3.11), `name`, `role` (Admin | Gerente | Operador | Consulta — ver §3.10), `email`, `active`, `isSystem` (não pode ser excluída — ver §3.15), `avatarUrl` (string absoluta para a imagem servida pelo backend, ou `null` — ver §3.9). Senha nunca trafega nem é armazenada em texto puro: o backend guarda só `hashed_password` (bcrypt, `backend/app/db/models/user.py`) e nunca a devolve nas respostas da API (`UserOut`, `backend/app/schemas/user.py`) — por isso o tipo `User` do frontend (`src/features/users/model/types.ts`) não tem mais campo `password`. Ao editar uma conta, deixar o campo de senha em branco mantém a senha atual; preencher troca.
 
-Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `manageUsers`, `manageAudit` (ver §3.7).
+Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `updateProduction`, `manageUnits`, `managePeople`, `manageUsers`, `manageAudit` (ver §3.7).
 
 ## 5. Functional Requirements
 
@@ -247,8 +248,8 @@ Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e
 
 ### 6.4 Regras de Permissão
 1. Consulta só visualiza (painéis e listas) — sem criar, editar ou atualizar produção.
-2. Operador cria solicitações e atualiza produção/entrega, mas não gerencia unidades/usuários/log de auditoria.
-3. Gerente acumula as permissões do Operador mais gestão de unidades e usuários (`manageUnits`, `manageUsers`), mas não gerencia o log de auditoria — ver §3.10.
+2. Operador cria solicitações e atualiza produção/entrega, mas não gerencia locais/pessoas/usuários/log de auditoria.
+3. Gerente acumula as permissões do Operador mais gestão de locais, pessoas e usuários (`manageUnits`, `managePeople`, `manageUsers`), mas não gerencia o log de auditoria — ver §3.10.
 4. Admin acumula todas as permissões, incluindo gestão de usuários, unidades e log de auditoria (`manageAudit` — ver §3.7). É o único papel, junto do Gerente, que pode criar/editar contas de usuário.
 
 ## 7. UI Stack Governance

@@ -13,6 +13,7 @@ ALL_PERMISSIONS: set[Permission] = {
     "editRequests",
     "updateProduction",
     "manageUnits",
+    "managePeople",
     "manageUsers",
     "manageAudit",
 }
@@ -27,10 +28,19 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, set[Permission]] = {
         "editRequests",
         "updateProduction",
         "manageUnits",
+        "managePeople",
         "manageUsers",
         "manageAudit",
     },
-    "Gerente": {"viewDashboard", "createRequests", "editRequests", "updateProduction", "manageUnits", "manageUsers"},
+    "Gerente": {
+        "viewDashboard",
+        "createRequests",
+        "editRequests",
+        "updateProduction",
+        "manageUnits",
+        "managePeople",
+        "manageUsers",
+    },
     "Operador": {"viewDashboard", "createRequests", "editRequests", "updateProduction"},
     "Consulta": {"viewDashboard"},
 }

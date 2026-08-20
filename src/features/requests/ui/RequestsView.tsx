@@ -898,6 +898,8 @@ export function RequestsView(props: {
   onDeleteHistoryEntry: (requestId: string, entryId: number) => Promise<void>;
   onCreateUnit: (draft: { name: string; origin: Origin; contact?: string }) => Promise<Unit>;
   onCreatePerson: (draft: { name: string; registrationNumber: string; phone: string; unitId: string }) => Promise<Person>;
+  onSync: () => void;
+  isSyncing: boolean;
 }) {
   const {
     units,
@@ -928,6 +930,8 @@ export function RequestsView(props: {
     onDeleteHistoryEntry,
     onCreateUnit,
     onCreatePerson,
+    onSync,
+    isSyncing,
   } = props;
 
   const [pendingDelete, setPendingDelete] = useState<CopyRequest | null>(null);
@@ -1179,7 +1183,11 @@ export function RequestsView(props: {
   return (
     <>
       <PrintReportHeader title="Relatório de Solicitações" subtitle={filterSummary} />
-      <div className="mb-4 flex justify-end print:hidden">
+      <div className="mb-4 flex justify-end gap-2.5 print:hidden">
+        <Button type="button" variant="soft" onClick={onSync} disabled={isSyncing}>
+          <RefreshCw size={17} className={cn(isSyncing && "animate-spin")} />
+          Sincronizar
+        </Button>
         <PrintButton />
       </div>
       <Card>

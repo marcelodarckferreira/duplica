@@ -10,8 +10,9 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   viewDashboard: "Ver dashboard",
   createRequests: "Criar solicitações",
   editRequests: "Editar solicitações",
-  updateProduction: "Atualizar produção/status",
-  manageUnits: "Gerenciar unidades",
+  updateProduction: "Atualizar status da solicitação",
+  manageUnits: "Gerenciar locais",
+  managePeople: "Gerenciar pessoas",
   manageUsers: "Gerenciar usuários",
   manageAudit: "Gerenciar auditoria",
 };
@@ -102,7 +103,8 @@ export function AccessProfilesView(props: { currentUserRole: UserRole }) {
                         </button>
                       </span>
                     ) : (
-                      role !== currentUserRole && (
+                      role !== currentUserRole &&
+                      role !== "Admin" && (
                         <button
                           type="button"
                           aria-label={`Editar permissões de ${role}`}
