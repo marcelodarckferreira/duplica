@@ -7,6 +7,7 @@ import { Button } from "../../../shared/ui/button";
 import { Card, CardDescription, CardHeader, CardTitle } from "../../../shared/ui/card";
 import { ConfirmModal } from "../../../shared/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../shared/ui/select";
+import { WhatsAppLink } from "../../../shared/ui/whatsapp-link";
 import { cn, formatPhone } from "../../../shared/lib/utils";
 import { origins } from "../model/rules";
 import { unitDraftSchema, UnitDraftInput } from "../schemas/schema";
@@ -209,9 +210,12 @@ export function UnitsView(props: {
                 <strong className="text-text">{unit.name}</strong>
                 <Badge variant={unit.active ? "active" : "inactive"}>{unit.active ? "Ativa" : "Inativa"}</Badge>
               </div>
-              <span className="text-muted">{unit.code}</span>
-              <em className="not-italic text-muted">{unit.origin}</em>
-              {unit.contact && <span className="text-muted">{unit.contact}</span>}
+              {unit.contact && (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-muted">{unit.contact}</span>
+                  <WhatsAppLink phone={unit.contact} label={unit.name} />
+                </div>
+              )}
               {canManage && (
                 <div className="mt-1.5 flex items-center gap-1">
                   <button
