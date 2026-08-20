@@ -5,6 +5,7 @@ import { SignaturePad, SignaturePadHandle } from "../../../shared/ui/signature-p
 import { useForm } from "react-hook-form";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
+import { WhatsAppLink } from "../../../shared/ui/whatsapp-link";
 import { Input } from "../../../shared/ui/input";
 import { Card } from "../../../shared/ui/card";
 import { ConfirmModal } from "../../../shared/ui/modal";
@@ -137,6 +138,13 @@ export function RequestTable(props: {
                   {showActions && (
                     <td className="border-b border-border-soft px-2.5 py-2.5 print:hidden" onClick={(event) => event.stopPropagation()}>
                       <div className="flex items-center justify-end gap-1">
+                        {request.contact && (
+                          <WhatsAppLink
+                            phone={request.contact}
+                            label={request.requester}
+                            message={`Olá, ${request.requester}! Sobre a solicitação ${request.code} (${request.documentDescription}): status atual é "${request.status}".`}
+                          />
+                        )}
                         {props.onEdit && (
                           <button
                             type="button"

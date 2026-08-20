@@ -12,13 +12,23 @@ function WhatsAppGlyph(props: { size: number }) {
   );
 }
 
-export function WhatsAppLink(props: { phone: string; label: string; className?: string; size?: number }) {
+export function WhatsAppLink(props: {
+  phone: string;
+  label: string;
+  message?: string;
+  className?: string;
+  size?: number;
+}) {
   const digits = props.phone.replace(/\D/g, "");
   if (!digits) return null;
 
+  const url = props.message
+    ? `https://wa.me/55${digits}?text=${encodeURIComponent(props.message)}`
+    : `https://wa.me/55${digits}`;
+
   return (
     <a
-      href={`https://wa.me/55${digits}`}
+      href={url}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={`Enviar WhatsApp para ${props.label}`}
