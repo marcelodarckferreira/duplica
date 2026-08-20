@@ -1,6 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ArrowLeft, Check, ChevronDown, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, X } from "lucide-react";
-import { Fragment, FormEvent, ReactNode, useRef, useState } from "react";
+import { Fragment, FormEvent, ReactNode, RefObject, useRef, useState } from "react";
 import { SignaturePad, SignaturePadHandle } from "../../../shared/ui/signature-pad";
 import { useForm } from "react-hook-form";
 import { Badge } from "../../../shared/ui/badge";
@@ -765,6 +765,108 @@ function RequestForm(props: {
   );
 }
 
+function DeliveryConfirmationScreen(props: {
+  request: CopyRequest;
+  pickedUpBy: string;
+  onPickedUpByChange: (value: string) => void;
+  error: string;
+  isConfirming: boolean;
+  signatureRef: RefObject<SignaturePadHandle | null>;
+  onCancel: () => void;
+  onConfirm: () => void;
+}) {
+  const { request, pickedUpBy, onPickedUpByChange, error, isConfirming, signatureRef, onCancel, onConfirm } = props;
+  return (
+    <div className="grid gap-4">
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={onCancel}
+          aria-label="Voltar para a lista"
+          className="grid h-8 w-8 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-text"
+        >
+          <ArrowLeft size={18} />
+        </button>
+        <div>
+          <h2 className="m-0 text-[1.08rem] font-bold text-text">Confirmar entrega</h2>
+          <p className="m-0 text-sm text-muted">Solicitação {request.code}</p>
+        </div>
+      </div>
+
+      <Card>
+        <p className="m-0 mb-3 text-[11px] font-bold uppercase tracking-wide text-muted">Resumo da solicitação</p>
+        <div className="flex flex-wrap gap-x-8 gap-y-3">
+          {(
+            [
+              ["Local", request.unitName],
+              ["Solicitante", request.requester],
+              ["Documento", request.documentDescription],
+              ["Páginas", formatNumber(request.pages)],
+              ["Jogos / cópias", formatNumber(request.copies)],
+              ["Papel", request.paper],
+              ["Cor", request.colorMode],
+              ["Imprimir", request.duplex ? "Frente e verso" : "Frente"],
+              ["Grampo", request.staple],
+              ["Prioridade", request.priority],
+            ] as const
+          ).map(([label, value]) => (
+            <div key={label}>
+              <p className="m-0 text-xs font-bold uppercase text-muted">{label}</p>
+              <p className="m-0 font-bold text-text">{value}</p>
+            </div>
+          ))}
+          {request.notes && (
+            <div className="max-w-sm">
+              <p className="m-0 text-xs font-bold uppercase text-muted">Observações</p>
+              <p className="m-0 font-bold text-text">{request.notes}</p>
+            </div>
+          )}
+        </div>
+      </Card>
+
+      <Card>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            onConfirm();
+          }}
+          className="grid gap-3"
+        >
+          <label className="grid max-w-md gap-1.5 text-sm font-bold text-label">
+            Quem retirou as cópias
+            <input
+              autoFocus
+              value={pickedUpBy}
+              onChange={(event) => onPickedUpByChange(event.target.value)}
+              placeholder="Nome de quem retirou"
+              className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
+            />
+          </label>
+          <div className="grid max-w-md gap-1.5 text-sm font-bold text-label">
+            {/* div, não label: um <label> envolvendo o pad encaminha o
+                clique de soltar o mouse no canvas pro botão "Limpar
+                assinatura" (único controle associável ali dentro), que é
+                o primeiro elemento associável — limpando o traço recém
+                desenhado assim que o usuário solta o mouse. */}
+            Assinatura de quem retirou
+            <SignaturePad ref={signatureRef} className="max-w-md" />
+          </div>
+          {error && <p className="m-0 font-bold text-[#a43b2f]">{error}</p>}
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button type="button" variant="soft" onClick={onCancel} disabled={isConfirming}>
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={isConfirming}>
+              {isConfirming ? <Spinner /> : <Check size={16} />}
+              {isConfirming ? "Confirmando…" : "Confirmar entrega"}
+            </Button>
+          </div>
+        </form>
+      </Card>
+    </div>
+  );
+}
+
 const filterSelectClasses = "h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none";
 
 export function RequestsView(props: {
@@ -1047,6 +1149,24 @@ export function RequestsView(props: {
     );
   }
 
+  if (pendingDelivery) {
+    return (
+      <DeliveryConfirmationScreen
+        request={pendingDelivery}
+        pickedUpBy={deliveryPickedUpBy}
+        onPickedUpByChange={(value) => {
+          setDeliveryPickedUpBy(value);
+          if (deliveryError) setDeliveryError("");
+        }}
+        error={deliveryError}
+        isConfirming={isConfirmingDelivery}
+        signatureRef={deliverySignatureRef}
+        onCancel={() => setPendingDelivery(null)}
+        onConfirm={() => void handleConfirmDelivery()}
+      />
+    );
+  }
+
   const filterSummary = [
     `${filteredRequests.length} solicitação(ões)`,
     statusFilter !== "Todos" ? `status: ${statusFilter}` : null,
@@ -1123,57 +1243,6 @@ export function RequestsView(props: {
         onConfirm={handleConfirmDelete}
         onCancel={() => setPendingDelete(null)}
       />
-
-      <Dialog open={pendingDelivery !== null} onOpenChange={(open) => !open && setPendingDelivery(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar entrega</DialogTitle>
-          </DialogHeader>
-          <form
-            onSubmit={(event) => {
-              event.preventDefault();
-              void handleConfirmDelivery();
-            }}
-            className="grid gap-1.5"
-          >
-            <p className="m-0 text-sm text-muted">
-              {pendingDelivery ? `Solicitação ${pendingDelivery.code}` : ""}
-            </p>
-            <label className="grid gap-1.5 text-sm font-bold text-label">
-              Quem retirou as cópias
-              <input
-                autoFocus
-                value={deliveryPickedUpBy}
-                onChange={(event) => {
-                  setDeliveryPickedUpBy(event.target.value);
-                  if (deliveryError) setDeliveryError("");
-                }}
-                placeholder="Nome de quem retirou"
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
-              />
-            </label>
-            <div className="grid gap-1.5 text-sm font-bold text-label">
-              {/* div, não label: um <label> envolvendo o pad encaminha o
-                  clique de soltar o mouse no canvas pro botão "Limpar
-                  assinatura" (único controle associável ali dentro), que é
-                  o primeiro elemento associável — limpando o traço recém
-                  desenhado assim que o usuário solta o mouse. */}
-              Assinatura de quem retirou
-              <SignaturePad ref={deliverySignatureRef} />
-            </div>
-            {deliveryError && <p className="m-0 font-bold text-[#a43b2f]">{deliveryError}</p>}
-            <DialogFooter>
-              <Button type="button" variant="soft" onClick={() => setPendingDelivery(null)} disabled={isConfirmingDelivery}>
-                Cancelar
-              </Button>
-              <Button type="submit" disabled={isConfirmingDelivery}>
-                {isConfirmingDelivery ? <Spinner /> : <Check size={16} />}
-                {isConfirmingDelivery ? "Confirmando…" : "Confirmar entrega"}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
 
       <ConfirmModal
         open={pendingDeleteHistoryEntry !== null}
