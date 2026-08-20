@@ -7,7 +7,7 @@
 ![TanStack Query](https://img.shields.io/badge/TanStack%20Query-5-FF4154?logo=reactquery&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-Sistema web de controle de solicitações de cópia/impressão para a **SEMED** (Secretaria Municipal de Educação): do pedido feito por uma escola ou setor até a entrega confirmada — com histórico de status completo, assinatura digital de quem retirou as cópias, consolidação mensal de consumo de papel e notificação via WhatsApp.
+Sistema web de controle de solicitações de cópia/impressão institucional: do pedido feito por uma escola ou unidade (sede administrativa, setor etc.) até a entrega confirmada — com histórico de status completo, assinatura digital de quem retirou as cópias, consolidação mensal de consumo de papel e notificação via WhatsApp.
 
 Frontend em React 19 + TypeScript, backend próprio em Python/FastAPI + PostgreSQL. Interface 100% em português (pt-BR), sem i18n.
 
@@ -136,4 +136,4 @@ Login aceita usuário ou e-mail, no mesmo campo.
 
 ## Licença
 
-Uso interno — SEMED.
+Uso interno.

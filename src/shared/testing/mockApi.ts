@@ -90,9 +90,9 @@ function noContent(): Promise<Response> {
 
 export function installMockApi() {
   const units: MockUnit[] = [
-    { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "Escola", code: "ESC-001", contact: null, active: true },
-    { id: "emef-ana-nery", name: "EMEF Ana Nery", origin: "Escola", code: "ESC-002", contact: null, active: true },
-    { id: "setor-pedagogico", name: "Sede - Coordenação Pedagógica", origin: "Setor SEMED", code: "SED-PED", contact: null, active: true },
+    { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "ESCOLA", code: "ESC-001", contact: null, active: true },
+    { id: "emef-ana-nery", name: "EMEF Ana Nery", origin: "ESCOLA", code: "ESC-002", contact: null, active: true },
+    { id: "setor-pedagogico", name: "Sede - Coordenação Pedagógica", origin: "SEDE", code: "SED-PED", contact: null, active: true },
   ];
 
   const people: MockPerson[] = [
@@ -120,7 +120,7 @@ export function installMockApi() {
     {
       id: "req-1",
       code: "CP-2026-0001",
-      origin: "Escola",
+      origin: "ESCOLA",
       unit_id: "emef-paulo-freire",
       unit_name: "EMEF Paulo Freire",
       requester: "Ana Souza",
@@ -151,7 +151,7 @@ export function installMockApi() {
     {
       id: "req-2",
       code: "CP-2026-0002",
-      origin: "Setor SEMED",
+      origin: "SEDE",
       unit_id: "setor-pedagogico",
       unit_name: "Sede - Coordenação Pedagógica",
       requester: "Rafael Mendes",
@@ -182,7 +182,7 @@ export function installMockApi() {
     {
       id: "req-3",
       code: "CP-2026-0003",
-      origin: "Escola",
+      origin: "ESCOLA",
       unit_id: "emef-ana-nery",
       unit_name: "EMEF Ana Nery",
       requester: "Beatriz Lima",
@@ -354,7 +354,7 @@ export function installMockApi() {
         existing.contact = body.contact ?? null;
         return json(existing);
       }
-      const prefix = body.origin === "Escola" ? "ESC" : "SED";
+      const prefix = body.origin === "ESCOLA" ? "ESC" : "SED";
       const usedNumbers = units
         .map((item) => item.code.match(new RegExp(`^${prefix}-(\\d+)$`)))
         .filter((match): match is RegExpMatchArray => match !== null)

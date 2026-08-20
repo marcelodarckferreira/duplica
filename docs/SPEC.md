@@ -3,7 +3,7 @@
 > **Status documental:** especificação viva do MVP atual. Estrutura espelhada em `docs/specs/SPEC.md` do ForgeHub (mesmo padrão organizacional de spec), adaptada ao domínio deste projeto. Complementa — não substitui — `docs/superpowers/specs/2026-08-10-grafica-design.md` (design) e `docs/superpowers/plans/2026-08-10-grafica-mvp.md` (plano de implementação).
 
 ## 1. Scope
-Este documento define a especificação funcional e técnica do Duplica, o sistema de controle de cópias da SEMED: solicitações de impressão/cópia originadas por Escolas ou pela Sede SEMED, produção, entrega, histórico de status, ranking de unidades e consolidação mensal.
+Este documento define a especificação funcional e técnica do Duplica, um sistema de controle de cópias institucional (não vinculado a uma organização específica — 2026-08-20: valores de origem generalizados de `"Escola"`/`"Setor SEMED"` para `ESCOLA`/`SEDE`, ver `docs/version/v01/13_98d763f27206_rename_origin_values_to_escola_and_sede.py`; a SEMED, secretaria municipal de educação, é uma usuária do sistema, não sua dona/homônima): solicitações de impressão/cópia originadas por Escolas ou pela Sede, produção, entrega, histórico de status, ranking de unidades e consolidação mensal.
 
 **Nome do produto (2026-08-10, a pedido explícito):** o sistema passou a se chamar **Duplica** — era "Gráfica" até então. A troca inicial cobriu só o nome visível (título da página, tela de login, sidebar, este documento e os READMEs); identificadores técnicos internos (nome do banco Postgres `grafica`, container Docker `grafica_postgres`, `package.json`, chaves de `localStorage` como `grafica.semed.theme`/`grafica.semed.token`) continuam usando "grafica" deliberadamente, por decisão explícita de manter esse rename de baixo risco (sem mexer em infraestrutura em uso). **Atualização, ainda 2026-08-10, a pedido explícito:** a pasta do projeto também foi renomeada, de `/root/project/grafica` para `/root/project/duplica` — essa foi a única mudança de escopo ampliado; banco/container/`package.json`/chaves de `localStorage` seguem "grafica".
 
@@ -175,7 +175,7 @@ Dois modos formalizados, cada um com seu script em `scripts/` — nunca subir os
 ## 4. Domain Model
 
 ### 4.1 Unit (Unidade)
-Campos: `id`, `name`, `origin` (Escola | Sede SEMED), `code`, `contact?`, `active`.
+Campos: `id`, `name`, `origin` (`ESCOLA` | `SEDE`), `code`, `contact?`, `active`.
 
 ### 4.2 CopyRequest (Solicitação de Cópia)
 Campos: `id`, `code` (padrão `CP-2026-0001`), `origin`, `unitId`, `unitName`, `requester`, `contact`, `documentDescription`, `pages`, `copies`, `duplex`, `printedFaces`, `consumedSheets`, `paper` (A4 | A3 | Ofício), `colorMode` (P&B | Colorido), `priority` (Normal | Urgente | Institucional), `desiredDeadline`, `status`, `productionOwner`, `requestedAt`, `producedAt`, `deliveredAt`, `pickedUpBy`, `notes`, `history: StatusHistoryEntry[]`.
@@ -203,7 +203,7 @@ Permissões (`Permission`): `viewDashboard`, `createRequests`, `editRequests`, `
 - Consolidação mensal (solicitações/faces/folhas por mês) e ranking completo de uso por unidade (2026-08-10, a pedido explícito — conteúdo que antes vivia numa tela "Relatórios" separada, agora incorporado direto ao Dashboard; ver §3.5).
 
 ### 5.3 Gestão de Solicitações
-- Criar solicitação com origem Escola ou Sede SEMED.
+- Criar solicitação com origem Escola ou Sede.
 - Calcular automaticamente faces impressas e folhas consumidas.
 - Gerar código único no padrão `CP-2026-0001`.
 - Atualizar status e registrar histórico a cada transição.
@@ -255,7 +255,7 @@ Não é mais uma tela própria — ver §5.2 (o ranking de unidades por volume e
 - **Radix UI + Tailwind cobrem o app inteiro desde 2026-08-11** (ver §2.2) — deixou de ser "sem biblioteca de componentes de terceiros"; qualquer biblioteca de UI *adicional* a esse padrão (Radix + wrappers estilo shadcn em `src/shared/ui/`) ainda exige avaliação de licença, acessibilidade, impacto de bundle e manutenção antes de entrar em produção.
 - Ícones via `lucide-react`.
 - **Nenhuma feature deve criar uma segunda implementação de um componente já disponível em `src/shared/ui/`** (princípio direto de `02-UI-DESIGN-SYSTEM-AND-TECHNOLOGY-SPEC.md` §5.4) — antes de estilizar algo novo à mão, checar o catálogo do Storybook (§2.3).
-- **Design system (cores) é próprio do Duplica, não copiado do ForgeHub.** A estrutura/organização de código (seção 3.6) espelha o ForgeHub, e o padrão técnico de UI (Tailwind + Radix, seção 2.2) é o mesmo do ForgeHub — mas a paleta visual continua independente: tema claro/escuro definido em `src/app/theme.ts` e tokens em `src/app/styles/styles.css` (`--surface`, `--text`, `--accent`, `--status-recebido-fg/bg` etc., mapeados 1:1 em `tailwind.config.js`) mantêm identidade própria do projeto (institucional/SEMED, verde-petróleo), sem herdar as cores do ForgeHub (indigo/âmbar).
+- **Design system (cores) é próprio do Duplica, não copiado do ForgeHub.** A estrutura/organização de código (seção 3.6) espelha o ForgeHub, e o padrão técnico de UI (Tailwind + Radix, seção 2.2) é o mesmo do ForgeHub — mas a paleta visual continua independente: tema claro/escuro definido em `src/app/theme.ts` e tokens em `src/app/styles/styles.css` (`--surface`, `--text`, `--accent`, `--status-recebido-fg/bg` etc., mapeados 1:1 em `tailwind.config.js`) mantêm identidade própria do projeto (institucional, verde-petróleo), sem herdar as cores do ForgeHub (indigo/âmbar).
 - **Portal de componentes Radix:** `Dialog`/`Select`/`DropdownMenu` usam `usePortalContainer()` (`src/shared/lib/utils.ts`) para portar seu conteúdo dentro de `#theme-root`, não em `document.body` (o padrão do Radix). Sem isso, o conteúdo portado perde acesso às CSS custom properties do tema (fundo/texto ficam "unset") — bug real encontrado pelos testes de acessibilidade da Fase 9 (ver §11.3), não visível numa inspeção visual manual em tema claro por coincidência de cores.
 - **Logomarca:** `src/app/Logo.tsx` (`LogoMark` = só o ícone, `Logo` = ícone + wordmark "Duplica"), duas folhas sobrepostas com canto dobrado (metáfora de cópia/duplicação) na paleta institucional (`#16715f`/`#135f56`/`#123a43`, os mesmos tons de `--accent`/`--accent-strong`/`--sidebar`). Favicon em `public/favicon.svg` usa o mesmo desenho do `LogoMark`.
 
@@ -418,4 +418,4 @@ Após este SPEC, os próximos artefatos ainda pendentes são:
 - SECURITY SPEC (revisão formal: rotação de token, política de senha, MFA — a autenticação demonstrativa já foi substituída por JWT+bcrypt reais, mas sem essa revisão)
 - Suíte de testes automatizados do backend (`pytest` + `httpx.AsyncClient` contra um Postgres de teste) — hoje a validação do backend é manual via `curl`; a suíte E2E do frontend (§11.3) já cobre os fluxos críticos ponta a ponta, mas não substitui testes unitários de backend
 - Focus trap próprio para o `DropdownMenu` (ver exceção documentada em §11.3) — resolveria de vez a limitação da lib `aria-hidden`, mas exigiria reimplementar parte do gerenciamento de foco por cima do Radix
-- Code-splitting do bundle de produção (`vite build` avisa que o chunk principal passou de 500 kB depois da adoção de Radix/TanStack Query/RHF — ainda não é um problema real para o volume de uso da SEMED, mas vale revisar se o app crescer)
+- Code-splitting do bundle de produção (`vite build` avisa que o chunk principal passou de 500 kB depois da adoção de Radix/TanStack Query/RHF — ainda não é um problema real pro volume de uso atual, mas vale revisar se o app crescer)

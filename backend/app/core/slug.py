@@ -13,7 +13,7 @@ def generate_unit_id(name: str) -> str:
 # origem mudar depois) — daí ser sequencial por prefixo em vez de tentar
 # abreviar o nome, que exigiria checar colisão/legibilidade em tempo real.
 def generate_unit_code(origin: str, existing_codes: list[str]) -> str:
-    prefix = "ESC" if origin == "Escola" else "SED"
+    prefix = "ESC" if origin == "ESCOLA" else "SED"
     pattern = re.compile(rf"^{prefix}-(\d+)$")
     max_seq = 0
     for code in existing_codes:

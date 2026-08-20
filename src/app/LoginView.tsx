@@ -8,7 +8,7 @@ import { Input } from "../shared/ui/input";
 import { Label } from "../shared/ui/label";
 
 const pillars = [
-  { icon: ClipboardList, label: "Solicitações", copy: "Escolas e setores da SEMED registram pedidos de cópia num único lugar." },
+  { icon: ClipboardList, label: "Solicitações", copy: "Escolas e setores registram pedidos de cópia num único lugar." },
   { icon: Printer, label: "Produção e entrega", copy: "Status, histórico e retirada acompanhados do início ao fim." },
   { icon: BarChart3, label: "Relatórios", copy: "Ranking de locais e consolidação mensal em tempo real." },
 ];
@@ -38,7 +38,7 @@ export function LoginView(props: {
               CONTROLE DE IMPRESSÃO
             </span>
             <h2 className="max-w-md text-3xl font-bold leading-tight text-white">
-              Gestão centralizada de solicitações de impressão da SEMED.
+              Gestão centralizada de solicitações de impressão.
             </h2>
           </div>
           <div className="grid gap-3">
@@ -66,10 +66,7 @@ export function LoginView(props: {
             <Logo />
           </div>
           <div className="mb-6">
-            <span className="inline-flex items-center rounded-full bg-accent/10 px-2.5 py-0.5 text-xs font-bold text-accent border border-accent/20">
-              SEMED
-            </span>
-            <h1 id="login-title" className="m-0 mb-1 mt-2 text-3xl font-bold leading-tight text-text">
+            <h1 id="login-title" className="sr-only m-0 mb-1 text-3xl font-bold leading-tight text-text lg:not-sr-only">
               Duplica
             </h1>
             <p className="m-0 text-sm text-muted">Acesse com suas credenciais para gerenciar solicitações.</p>

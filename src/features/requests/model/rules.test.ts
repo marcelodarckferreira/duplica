@@ -5,7 +5,7 @@ import { CopyRequest } from "./types";
 const baseRequest: CopyRequest = {
   id: "1",
   code: "CP-2026-0001",
-  origin: "Escola",
+  origin: "ESCOLA",
   unitId: "u1",
   unitName: "EMEF Paulo Freire",
   requester: "Ana Souza",
@@ -48,12 +48,12 @@ describe("requests domain rules", () => {
     const requests = [
       baseRequest,
       { ...baseRequest, id: "2", unitId: "u2", unitName: "EMEF Ana Nery", status: "Pronto" as const },
-      { ...baseRequest, id: "3", origin: "Setor SEMED" as const, unitId: "u3", unitName: "Sede - RH" },
+      { ...baseRequest, id: "3", origin: "SEDE" as const, unitId: "u3", unitName: "Sede - RH" },
     ];
 
     expect(filterRequests(requests, { query: "ana nery", status: "Todos", origin: "Todas", unitId: "Todas" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Pronto", origin: "Todas", unitId: "Todas" })).toHaveLength(1);
-    expect(filterRequests(requests, { query: "", status: "Todos", origin: "Setor SEMED", unitId: "Todas" })).toHaveLength(1);
+    expect(filterRequests(requests, { query: "", status: "Todos", origin: "SEDE", unitId: "Todas" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Todos", origin: "Todas", unitId: "u1" })).toHaveLength(1);
     expect(filterRequests(requests, { query: "", status: "Todos", origin: "Todas", unitId: "Todas" })).toHaveLength(3);
   });
@@ -71,7 +71,7 @@ describe("requests domain rules", () => {
 
   it("converts a request back into an editable draft", () => {
     expect(requestToDraft(baseRequest)).toMatchObject({
-      origin: "Escola",
+      origin: "ESCOLA",
       unitId: "u1",
       requester: "Ana Souza",
     });

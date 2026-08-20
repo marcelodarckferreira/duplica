@@ -1,6 +1,6 @@
 import { Origin } from "./types";
 
-export const origins: Origin[] = ["Escola", "Setor SEMED"];
+export const origins: Origin[] = ["ESCOLA", "SEDE"];
 
 export function generateUnitId(name: string): string {
   return name

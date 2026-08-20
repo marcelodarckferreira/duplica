@@ -15,7 +15,7 @@ export function PrintReportHeader(props: { title: string; subtitle?: string }) {
 
   return (
     <div className="hidden print:mb-4 print:block">
-      <p className="m-0 text-xs font-bold uppercase tracking-wide text-muted">Duplica — SEMED — Controle de Impressão</p>
+      <p className="m-0 text-xs font-bold uppercase tracking-wide text-muted">Duplica — Controle de Impressão</p>
       <h2 className="m-0 mt-1 text-xl font-bold text-text">{props.title}</h2>
       {props.subtitle && <p className="m-0 mt-1 text-sm text-muted">{props.subtitle}</p>}
       <p className="m-0 mt-1 text-xs text-muted">Gerado em {generatedAt}</p>

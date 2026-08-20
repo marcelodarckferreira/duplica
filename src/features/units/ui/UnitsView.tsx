@@ -37,7 +37,7 @@ function UnitForm(props: {
     resolver: zodResolver(unitDraftSchema),
     defaultValues: editingUnit
       ? { name: editingUnit.name, origin: editingUnit.origin, contact: editingUnit.contact ?? "" }
-      : { name: "", origin: "Escola", contact: "" },
+      : { name: "", origin: "ESCOLA", contact: "" },
   });
 
   return (

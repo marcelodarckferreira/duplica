@@ -15,7 +15,7 @@ describe("units repository", () => {
 
   it("lists units from the API", async () => {
     const units = [
-      { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "Escola", code: "ESC-001", contact: null, active: true },
+      { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "ESCOLA", code: "ESC-001", contact: null, active: true },
     ];
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(units), { status: 200 }));
 
@@ -27,14 +27,14 @@ describe("units repository", () => {
   });
 
   it("saves a unit via POST", async () => {
-    const saved = { id: "emef-nova", name: "EMEF Nova", origin: "Escola", code: "ESC-010", contact: null, active: true };
+    const saved = { id: "emef-nova", name: "EMEF Nova", origin: "ESCOLA", code: "ESC-010", contact: null, active: true };
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
 
     const repo = createUnitsRepository();
     const result = await repo.saveUnit({
       id: "emef-nova",
       name: "EMEF Nova",
-      origin: "Escola",
+      origin: "ESCOLA",
       active: true,
     });
 
@@ -42,7 +42,7 @@ describe("units repository", () => {
     expect(requestInit.method).toBe("POST");
     // "code" não é enviado pelo cliente: é gerado no servidor.
     const sentBody = JSON.parse(requestInit.body);
-    expect(sentBody).toMatchObject({ name: "EMEF Nova", origin: "Escola" });
+    expect(sentBody).toMatchObject({ name: "EMEF Nova", origin: "ESCOLA" });
     expect(sentBody).not.toHaveProperty("code");
     expect(result).toEqual(saved);
   });
@@ -52,7 +52,7 @@ describe("units repository", () => {
 
     const repo = createUnitsRepository();
     await expect(
-      repo.saveUnit({ id: "x", name: "X", origin: "Escola", active: true }),
+      repo.saveUnit({ id: "x", name: "X", origin: "ESCOLA", active: true }),
     ).rejects.toThrow("Falha ao salvar.");
   });
 });

@@ -5,7 +5,7 @@ import { CopyRequest } from "../../requests/model/types";
 const baseRequest: CopyRequest = {
   id: "1",
   code: "CP-2026-0001",
-  origin: "Escola",
+  origin: "ESCOLA",
   unitId: "u1",
   unitName: "EMEF Paulo Freire",
   requester: "Ana Souza",

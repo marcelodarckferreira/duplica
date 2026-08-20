@@ -1,4 +1,4 @@
-export type Origin = "Escola" | "Setor SEMED";
+export type Origin = "ESCOLA" | "SEDE";
 
 export interface Unit {
   id: string;

@@ -232,7 +232,7 @@ function RequestForm(props: {
         }
       : {
           ...emptyDraft,
-          unitId: units.find((unit) => unit.origin === "Escola")?.id ?? "",
+          unitId: units.find((unit) => unit.origin === "ESCOLA")?.id ?? "",
           // Quem está criando a solicitação normalmente é quem vai produzi-la
           // — evita ter que escolher o próprio nome na lista toda vez.
           productionOwner: currentUserName,

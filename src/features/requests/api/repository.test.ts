@@ -4,7 +4,7 @@ import { createRequestsRepository } from "./repository";
 const apiRequest = {
   id: "req-1",
   code: "CP-2026-0001",
-  origin: "Escola",
+  origin: "ESCOLA",
   unit_id: "emef-paulo-freire",
   unit_name: "EMEF Paulo Freire",
   requester: "Ana Souza",
@@ -67,7 +67,7 @@ describe("requests repository", () => {
 
     const repo = createRequestsRepository();
     await repo.createRequest({
-      origin: "Escola",
+      origin: "ESCOLA",
       unitId: "emef-paulo-freire",
       requester: "Ana Souza",
       contact: "(11) 99999-0000",

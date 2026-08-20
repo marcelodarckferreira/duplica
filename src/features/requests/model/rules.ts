@@ -35,7 +35,7 @@ export const staples: Staple[] = ["Off", "Top Left 1", "Left 2", "Top Right 1", 
 export const layouts: Layout[] = ["Retrato", "Paisagem"];
 
 export const emptyDraft: RequestDraft = {
-  origin: "Escola",
+  origin: "ESCOLA",
   unitId: "emef-paulo-freire",
   personId: "",
   requester: "",
