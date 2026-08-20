@@ -210,39 +210,39 @@ export function UnitsView(props: {
                 <strong className="text-text">{unit.name}</strong>
                 <Badge variant={unit.active ? "active" : "inactive"}>{unit.active ? "Ativa" : "Inativa"}</Badge>
               </div>
-              {unit.contact && (
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted">{unit.contact}</span>
-                  <WhatsAppLink phone={unit.contact} label={unit.name} />
-                </div>
-              )}
-              {canManage && (
+              {unit.contact && <span className="text-muted">{unit.contact}</span>}
+              {(canManage || unit.contact) && (
                 <div className="mt-1.5 flex items-center gap-1">
-                  <button
-                    type="button"
-                    className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-text"
-                    aria-label={`Editar ${unit.name}`}
-                    onClick={() => onEditUnit(unit)}
-                  >
-                    <Pencil size={15} />
-                  </button>
-                  <button
-                    type="button"
-                    className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-[#9b3d35]"
-                    aria-label={unit.active ? `Desativar ${unit.name}` : `Ativar ${unit.name}`}
-                    onClick={() => onToggleUnitActive(unit)}
-                  >
-                    {unit.active ? <Ban size={15} /> : <CheckCircle2 size={15} />}
-                  </button>
-                  {!unitIdsWithRequests.has(unit.id) && (
-                    <button
-                      type="button"
-                      className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-[#9b3d35]"
-                      aria-label={`Excluir ${unit.name}`}
-                      onClick={() => setPendingDelete(unit)}
-                    >
-                      <Trash2 size={15} />
-                    </button>
+                  {unit.contact && <WhatsAppLink phone={unit.contact} label={unit.name} />}
+                  {canManage && (
+                    <>
+                      <button
+                        type="button"
+                        className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-text"
+                        aria-label={`Editar ${unit.name}`}
+                        onClick={() => onEditUnit(unit)}
+                      >
+                        <Pencil size={15} />
+                      </button>
+                      <button
+                        type="button"
+                        className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-[#9b3d35]"
+                        aria-label={unit.active ? `Desativar ${unit.name}` : `Ativar ${unit.name}`}
+                        onClick={() => onToggleUnitActive(unit)}
+                      >
+                        {unit.active ? <Ban size={15} /> : <CheckCircle2 size={15} />}
+                      </button>
+                      {!unitIdsWithRequests.has(unit.id) && (
+                        <button
+                          type="button"
+                          className="grid h-7 w-7 place-items-center rounded border-0 bg-transparent p-0 text-muted [appearance:none] hover:bg-surface-soft hover:text-[#9b3d35]"
+                          aria-label={`Excluir ${unit.name}`}
+                          onClick={() => setPendingDelete(unit)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               )}
