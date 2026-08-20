@@ -21,11 +21,16 @@ export const SignaturePad = forwardRef<SignaturePadHandle, { className?: string 
     return canvasRef.current?.getContext("2d") ?? null;
   }
 
+  // Escala de CSS px (tamanho renderizado, ex.: um modal estreito) pro
+  // buffer real do canvas (600x220) — sem isso o traço fica confinado a um
+  // canto quando o canvas é exibido menor que sua resolução interna.
   function pointFromEvent(event: ReactPointerEvent<HTMLCanvasElement>) {
     const canvas = canvasRef.current;
     if (!canvas) return { x: 0, y: 0 };
     const rect = canvas.getBoundingClientRect();
-    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+    return { x: (event.clientX - rect.left) * scaleX, y: (event.clientY - rect.top) * scaleY };
   }
 
   function handlePointerDown(event: ReactPointerEvent<HTMLCanvasElement>) {
