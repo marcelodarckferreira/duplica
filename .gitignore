@@ -5,6 +5,7 @@ venv/
 __pycache__/
 *.pyc
 .env
+docker-compose.override.yml
 
 backend/uploads/
 
