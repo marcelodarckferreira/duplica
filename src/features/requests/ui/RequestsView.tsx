@@ -1127,10 +1127,15 @@ export function RequestsView(props: {
                 className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
               />
             </label>
-            <label className="grid gap-1.5 text-sm font-bold text-label">
+            <div className="grid gap-1.5 text-sm font-bold text-label">
+              {/* div, não label: um <label> envolvendo o pad encaminha o
+                  clique de soltar o mouse no canvas pro botão "Limpar
+                  assinatura" (único controle associável ali dentro), que é
+                  o primeiro elemento associável — limpando o traço recém
+                  desenhado assim que o usuário solta o mouse. */}
               Assinatura de quem retirou
               <SignaturePad ref={deliverySignatureRef} />
-            </label>
+            </div>
             {deliveryError && <p className="m-0 font-bold text-[#a43b2f]">{deliveryError}</p>}
             <DialogFooter>
               <Button type="button" variant="soft" onClick={() => setPendingDelivery(null)} disabled={isConfirmingDelivery}>
