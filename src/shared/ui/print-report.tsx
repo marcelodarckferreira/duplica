@@ -3,7 +3,7 @@ import { Button } from "./button";
 
 export function PrintButton(props: { label?: string }) {
   return (
-    <Button type="button" variant="soft" onClick={() => window.print()} className="print:hidden">
+    <Button type="button" variant="default" onClick={() => window.print()} className="print:hidden">
       <Printer size={17} />
       {props.label ?? "Imprimir"}
     </Button>

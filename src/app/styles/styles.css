@@ -7,55 +7,55 @@
 }
 
 .theme-root {
-  --page-bg: #f4f6f2;
+  --page-bg: #dce4dd;
   --surface: #ffffff;
-  --surface-soft: #eef3f0;
-  --surface-hover: #f3f8f5;
-  --border: #dfe7df;
-  --border-soft: #edf2ef;
-  --text: #192028;
-  --muted: #63707a;
-  --label: #34404b;
-  --accent: #16715f;
-  --accent-strong: #135f56;
-  --sidebar: #123a43;
-  --sidebar-text: #dceaea;
-  --sidebar-muted: #a9c9c9;
-  --shadow: rgba(17, 37, 38, 0.22);
-  --status-recebido-fg: #24536c;
-  --status-recebido-bg: #e3f1f8;
-  --status-em-producao-fg: #75602d;
-  --status-em-producao-bg: #fff2c4;
-  --status-pronto-fg: #17624c;
-  --status-pronto-bg: #dff3e8;
-  --status-entregue-fg: #355c3c;
-  --status-entregue-bg: #e4efd9;
-  --status-cancelado-fg: #8a342c;
-  --status-cancelado-bg: #f8dfdc;
-  --priority-urgente-fg: #9a3412;
-  --priority-urgente-bg: #ffe4d5;
-  --priority-institucional-fg: #4c3a92;
-  --priority-institucional-bg: #e6e1fb;
+  --surface-soft: #d8e5dd;
+  --surface-hover: #c3d7cb;
+  --border: #91a898;
+  --border-soft: #bdcfc3;
+  --text: #0d1512;
+  --muted: #3a4b43;
+  --label: #16241e;
+  --accent: #115c4d;
+  --accent-strong: #0d463b;
+  --sidebar: #0f2e35;
+  --sidebar-text: #e8f4f4;
+  --sidebar-muted: #8bb3b3;
+  --shadow: rgba(12, 28, 29, 0.22);
+  --status-recebido-fg: #133f55;
+  --status-recebido-bg: #d1e8f5;
+  --status-em-producao-fg: #594517;
+  --status-em-producao-bg: #fbe6a2;
+  --status-pronto-fg: #0d4a39;
+  --status-pronto-bg: #c9eedc;
+  --status-entregue-fg: #224327;
+  --status-entregue-bg: #cee5be;
+  --status-cancelado-fg: #6e2019;
+  --status-cancelado-bg: #f8cfcb;
+  --priority-urgente-fg: #7c2203;
+  --priority-urgente-bg: #fdd4bf;
+  --priority-institucional-fg: #372775;
+  --priority-institucional-bg: #d7cdfb;
   color: var(--text);
   background: var(--page-bg);
 }
 
 .theme-root[data-theme="dark"] {
-  --page-bg: #11171a;
-  --surface: #182125;
-  --surface-soft: #223036;
-  --surface-hover: #20332f;
-  --border: #2c3b3f;
-  --border-soft: #263338;
-  --text: #edf4f1;
-  --muted: #a7b5b2;
-  --label: #d8e4e0;
-  --accent: #6fd3ad;
-  --accent-strong: #39a982;
-  --sidebar: #0d252b;
+  --page-bg: #0f1518;
+  --surface: #182226;
+  --surface-soft: #24343a;
+  --surface-hover: #1d453b;
+  --border: #35474c;
+  --border-soft: #29383c;
+  --text: #f0f7f4;
+  --muted: #a3b5b1;
+  --label: #d8e5e1;
+  --accent: #5ec8a0;
+  --accent-strong: #339c77;
+  --sidebar: #0b1f24;
   --sidebar-text: #e4f1ef;
-  --sidebar-muted: #99bbb6;
-  --shadow: rgba(0, 0, 0, 0.42);
+  --sidebar-muted: #8eb3ad;
+  --shadow: rgba(0, 0, 0, 0.55);
   --status-recebido-fg: #bfe6fb;
   --status-recebido-bg: #173448;
   --status-em-producao-fg: #f4dda1;
@@ -90,6 +90,34 @@ textarea {
 
 button {
   cursor: pointer;
+}
+
+/* Customização suave e destacada da barra de rolagem (scrollbar) */
+::-webkit-scrollbar {
+  width: 9px;
+  height: 9px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--surface-soft);
+  border: 1.5px solid var(--accent);
+  border-radius: 9999px;
+  background-clip: padding-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--accent);
+  border: 1.5px solid var(--accent-strong);
+}
+
+.theme-root {
+  scrollbar-color: var(--accent) rgba(0, 0, 0, 0.03);
+  scrollbar-width: thin;
 }
 
 @media print {

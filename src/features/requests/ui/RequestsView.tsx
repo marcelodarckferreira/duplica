@@ -5,6 +5,7 @@ import { SignaturePad, SignaturePadHandle } from "../../../shared/ui/signature-p
 import { useForm } from "react-hook-form";
 import { Badge } from "../../../shared/ui/badge";
 import { Button } from "../../../shared/ui/button";
+import { Input } from "../../../shared/ui/input";
 import { Card } from "../../../shared/ui/card";
 import { ConfirmModal } from "../../../shared/ui/modal";
 import { PrintButton, PrintReportHeader } from "../../../shared/ui/print-report";
@@ -337,7 +338,7 @@ function RequestForm(props: {
 
   return (
     <>
-    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 rounded-lg border border-border bg-surface p-[18px]">
+    <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 rounded-lg border border-border bg-surface p-[18px] shadow-none">
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <button
@@ -417,7 +418,7 @@ function RequestForm(props: {
                         if (event.key !== "Escape") event.stopPropagation();
                       }}
                       placeholder="Pesquisar local..."
-                      className="h-9 w-full rounded border border-border bg-surface pl-8 pr-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="h-9 w-full rounded border border-border bg-surface pl-8 pr-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
                     />
                   </div>
                 </div>
@@ -434,7 +435,7 @@ function RequestForm(props: {
                 onClick={openCreateUnitDialog}
                 aria-label="Cadastrar novo local"
                 title="Cadastrar novo local"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded border border-border bg-surface text-muted [appearance:none] hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded border border-border bg-surface text-muted [appearance:none] hover:border-accent hover:text-accent shadow-none [appearance:none] focus:border-accent focus:outline-none"
               >
                 <Plus size={18} />
               </button>
@@ -477,7 +478,7 @@ function RequestForm(props: {
                         if (event.key !== "Escape") event.stopPropagation();
                       }}
                       placeholder="Pesquisar pessoa..."
-                      className="h-9 w-full rounded border border-border bg-surface pl-8 pr-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                      className="h-9 w-full rounded border border-border bg-surface pl-8 pr-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
                     />
                   </div>
                 </div>
@@ -499,7 +500,7 @@ function RequestForm(props: {
                 disabled={!unitId}
                 aria-label="Cadastrar nova pessoa"
                 title="Cadastrar nova pessoa"
-                className="grid h-11 w-11 shrink-0 place-items-center rounded border border-border bg-surface text-muted [appearance:none] hover:border-accent hover:text-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent disabled:cursor-not-allowed disabled:opacity-50"
+                className="grid h-11 w-11 shrink-0 place-items-center rounded border border-border bg-surface text-muted [appearance:none] hover:border-accent hover:text-accent shadow-none [appearance:none] focus:border-accent focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Plus size={18} />
               </button>
@@ -509,7 +510,7 @@ function RequestForm(props: {
         </label>
         <label className="grid min-w-0 gap-1.5 text-sm font-bold text-label sm:col-span-2 lg:col-span-4">
           Descrição / documento
-          <input className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent" {...register("documentDescription")} />
+          <Input {...register("documentDescription")} />
           <FieldError message={errors.documentDescription?.message} />
         </label>
         </div>
@@ -528,20 +529,18 @@ function RequestForm(props: {
         </label>
         <label className="grid min-w-0 gap-1.5 text-sm font-bold text-label">
           Páginas
-          <input
+          <Input
             type="number"
             min={1}
-            className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             {...register("pages", { valueAsNumber: true })}
           />
           <FieldError message={errors.pages?.message} />
         </label>
         <label className="grid min-w-0 gap-1.5 text-sm font-bold text-label">
           Jogos / cópias
-          <input
+          <Input
             type="number"
             min={1}
-            className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             {...register("copies", { valueAsNumber: true })}
           />
           <FieldError message={errors.copies?.message} />
@@ -602,7 +601,7 @@ function RequestForm(props: {
           Prazo desejado
           <input
             type="date"
-            className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+            className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
             {...register("desiredDeadline")}
           />
           <FieldError message={errors.desiredDeadline?.message} />
@@ -627,7 +626,7 @@ function RequestForm(props: {
       <div>
         <p className="m-0 mb-2.5 text-[11px] font-bold uppercase tracking-wide text-muted">Observações</p>
         <textarea
-          className="min-h-[82px] w-full resize-y rounded border border-border bg-surface px-3 py-2 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+          className="min-h-[82px] w-full resize-y rounded border border-border bg-surface px-3 py-2 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
           {...register("notes")}
         />
       </div>
@@ -663,7 +662,7 @@ function RequestForm(props: {
                 autoFocus
                 value={newUnitName}
                 onChange={(event) => setNewUnitName(event.target.value)}
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             <label className="grid gap-1.5 text-sm font-bold text-label">
@@ -671,7 +670,7 @@ function RequestForm(props: {
               <input
                 value={newUnitContact}
                 onChange={(event) => setNewUnitContact(event.target.value)}
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             {newUnitError && <p className="m-0 font-bold text-[#a43b2f]">{newUnitError}</p>}
@@ -708,7 +707,7 @@ function RequestForm(props: {
                 autoFocus
                 value={newPersonName}
                 onChange={(event) => setNewPersonName(event.target.value)}
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             <label className="grid gap-1.5 text-sm font-bold text-label">
@@ -716,7 +715,7 @@ function RequestForm(props: {
               <input
                 value={newPersonRegistrationNumber}
                 onChange={(event) => setNewPersonRegistrationNumber(event.target.value)}
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             <label className="grid gap-1.5 text-sm font-bold text-label">
@@ -725,7 +724,7 @@ function RequestForm(props: {
                 value={newPersonPhone}
                 onChange={(event) => setNewPersonPhone(formatPhone(event.target.value))}
                 placeholder="(00) 00000-0000"
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             {newPersonError && <p className="m-0 font-bold text-[#a43b2f]">{newPersonError}</p>}
@@ -745,7 +744,7 @@ function RequestForm(props: {
   );
 }
 
-const filterSelectClasses = "h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent";
+const filterSelectClasses = "h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none";
 
 export function RequestsView(props: {
   units: Unit[];
@@ -1047,7 +1046,7 @@ export function RequestsView(props: {
               value={query}
               onChange={(event) => onQueryChange(event.target.value)}
               placeholder="Buscar por código, unidade, solicitante ou documento"
-              className="h-11 w-full rounded border border-border bg-surface pl-9 pr-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+              className="h-11 w-full rounded border border-border bg-surface pl-9 pr-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
             />
           </label>
           <label className="grid gap-1.5 text-xs font-bold uppercase text-label">
@@ -1126,7 +1125,7 @@ export function RequestsView(props: {
                   if (deliveryError) setDeliveryError("");
                 }}
                 placeholder="Nome de quem retirou"
-                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                className="h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none"
               />
             </label>
             <div className="grid gap-1.5 text-sm font-bold text-label">

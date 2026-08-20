@@ -38,7 +38,7 @@ export const SelectContent = forwardRef<
       ref={ref}
       position={position}
       className={cn(
-        "z-50 max-h-72 min-w-[8rem] overflow-y-auto rounded border border-border bg-surface shadow-2xl",
+        "z-50 max-h-72 min-w-[8rem] overflow-y-auto rounded-lg border-2 border-accent bg-surface p-1 shadow-2xl ring-1 ring-black/10",
         position === "popper" && "translate-y-1",
         className,
       )}
@@ -55,16 +55,17 @@ export const SelectItem = forwardRef<ElementRef<typeof SelectPrimitive.Item>, Co
     <SelectPrimitive.Item
       ref={ref}
       className={cn(
-        "relative flex cursor-pointer select-none items-center rounded py-2 pl-8 pr-3 text-sm text-text outline-none",
-        "data-[highlighted]:bg-surface-soft",
+        "relative flex cursor-pointer select-none items-center rounded-md py-2.5 pl-8 pr-3 text-sm font-semibold text-text outline-none transition-colors",
+        "data-[state=checked]:bg-accent/15 data-[state=checked]:font-extrabold data-[state=checked]:text-accent-strong",
+        "data-[highlighted]:!bg-accent data-[highlighted]:!text-white",
         "data-[disabled]:pointer-events-none data-[disabled]:opacity-50",
         className,
       )}
       {...props}
     >
-      <span className="absolute left-2 grid h-4 w-4 place-items-center">
+      <span className="absolute left-2.5 grid h-4 w-4 place-items-center">
         <SelectPrimitive.ItemIndicator>
-          <Check size={14} />
+          <Check size={16} className="stroke-[3]" />
         </SelectPrimitive.ItemIndicator>
       </span>
       <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
@@ -72,3 +73,4 @@ export const SelectItem = forwardRef<ElementRef<typeof SelectPrimitive.Item>, Co
   ),
 );
 SelectItem.displayName = SelectPrimitive.Item.displayName;
+
