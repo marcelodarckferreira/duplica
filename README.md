@@ -4,112 +4,136 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python-009688?logo=fastapi&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-4169E1?logo=postgresql&logoColor=white)
+![TanStack Query](https://img.shields.io/badge/TanStack%20Query-5-FF4154?logo=reactquery&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind%20CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-Sistema web de controle de cópias/impressões para a SEMED: solicitações originadas por escolas ou pela Sede, produção, entrega, histórico de status, ranking de unidades, consolidação mensal e trilha de auditoria. Frontend em React/TypeScript, backend real em Python/FastAPI + Postgres (ver `docs/SPEC.md` §3.2 para a decisão de stack).
+Sistema web de controle de solicitações de cópia/impressão para a **SEMED** (Secretaria Municipal de Educação): do pedido feito por uma escola ou setor até a entrega confirmada — com histórico de status completo, assinatura digital de quem retirou as cópias, consolidação mensal de consumo de papel e notificação via WhatsApp.
+
+Frontend em React 19 + TypeScript, backend próprio em Python/FastAPI + PostgreSQL. Interface 100% em português (pt-BR), sem i18n.
 
 ## Funcionalidades
 
-- Login por usuário ou e-mail, com perfis Administrador, Gerente, Operador e Consulta — autenticação JWT contra o Postgres (senha com hash bcrypt), permissões aplicadas tanto no frontend quanto no backend. Tela de Perfis de Acesso mostra a matriz fixa de permissões por papel.
-- Menu de conta na sidebar com edição do próprio perfil, troca de senha (com confirmação da senha atual) e tema claro/escuro/sistema.
-- Dashboard com totais de cópias, solicitações, pendentes, prontas, entregues, consumo estimado de papel, ranking de unidades e consolidação mensal — tudo numa única tela.
-- Solicitações: tela de consulta separada da tela de edição/inclusão, com cálculo automático de faces impressas/folhas consumidas e código único (`CP-2026-0001`) gerados no backend, filtros, busca, histórico de status e confirmação de exclusão via modal.
-- Cadastro de unidades escolares e setores.
-- Cadastro de usuários com upload de foto de perfil, também em tela de consulta separada da tela de edição/inclusão.
-- Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático após 60 dias.
-- Navegação em tela única por regra de negócio (consulta nunca ao lado do formulário de inclusão/edição) e sidebar agrupada por seção — mesmo padrão usado no ForgeHub.
+**Solicitações**
+- Ciclo de vida completo por status (Recebido → Em produção → Pronto → Entregue, ou Cancelado), com histórico auditável por fase e validação de ordem no backend.
+- Cálculo automático de faces impressas e folhas consumidas (considera frente/frente-e-verso), código único gerado no servidor, prioridade (Normal/Urgente/Institucional) e especificação completa de impressão (papel, grampo, layout, cor).
+- Confirmação de entrega com **assinatura digital** — captura num canvas (sem dependência externa), armazenada junto do nome de quem retirou.
+- Compartilhamento de status via **WhatsApp**: um clique abre uma conversa com o solicitante já com a mensagem de status preenchida, assinada com o nome de quem está enviando (número institucional compartilhado por vários operadores).
+- Relatórios prontos para impressão/PDF (impressão nativa do navegador, sem biblioteca de PDF).
+
+**Dashboard e relatórios**
+- Métricas separadas de faces impressas vs. folhas de papel consumidas vs. resmas estimadas.
+- Ranking de locais por consumo de papel e por faces impressas, consolidação mensal, últimas solicitações.
+
+**Cadastros**
+- Locais (escolas e setores), com código gerado no servidor, ativação/desativação e exclusão protegida quando já há solicitações vinculadas.
+- Pessoas (solicitantes) por local, com matrícula e telefone.
+- Usuários com upload de foto de perfil.
+- **Perfis de acesso configuráveis** — permissões por papel (Admin/Gerente/Operador/Consulta) editáveis em tela, não fixas em código.
+
+**Plataforma**
+- Autenticação JWT (bcrypt), rate limiting no login, sessão persistente ("permanecer conectado").
+- Log de auditoria de toda mutação em solicitações, com expurgo automático após 60 dias.
+- Tema claro/escuro/sistema.
 
 ## Stack
 
-- **Frontend:** React 19 + Vite 6 + TypeScript (strict), organizado por domínio (`src/domains/<domain>/`), Tailwind CSS na "casca" da aplicação (login/sidebar) e na tela de Solicitações, CSS global nas demais telas de conteúdo.
-- **Backend:** Python/FastAPI + SQLAlchemy 2.0 async + Alembic + PostgreSQL, JWT Bearer + bcrypt, rate limiting no login, expurgo automático do log de auditoria via APScheduler.
+| Camada | Tecnologias |
+|---|---|
+| Frontend | React 19 · Vite 6 · TypeScript (strict) · TanStack Query · React Hook Form + Zod · Radix UI · Tailwind CSS |
+| Backend | FastAPI · SQLAlchemy 2.0 (async) · Alembic · PostgreSQL 16 · python-jose (JWT) · passlib/bcrypt · slowapi (rate limiting) |
+| Testes | Vitest + Testing Library (frontend, API mockada) · Playwright (E2E) · Storybook |
+| Deploy | Docker (imagem única, frontend empacotado no backend) · Docker Compose |
 
-## Modos: dev e pro
+## Arquitetura
 
-```bash
-./scripts/dev.sh           # modo dev — inicia Postgres (Docker) + backend (venv, --reload) + frontend (Vite, HMR)
-./scripts/dev.sh stop      # para os serviços dev (backend e frontend)
-./scripts/dev.sh stop --all # para os serviços dev e o container Postgres
-./scripts/dev.sh status    # exibe o status atual dos serviços dev
-./scripts/pro.sh           # modo pro — builda a imagem versionada e sobe Postgres + app via Docker Compose
+Organização **por domínio de negócio** nos dois lados, não por tipo de arquivo:
+
+```
+src/
+├── app/                      # shell da aplicação: login, sidebar, tema, AppShell
+├── features/
+│   ├── requests/              # solicitações — types, rules, repository, queries, UI
+│   ├── units/                 # locais
+│   ├── people/                 # pessoas
+│   ├── users/                 # usuários e perfis de acesso
+│   ├── reports/                # dashboard e consolidações
+│   └── audit/                  # log de auditoria
+└── shared/                    # UI base (Radix), api client, utils
+
+backend/app/
+├── core/                      # config, segurança, permissões, regras de impressão, auditoria
+├── db/models/                  # SQLAlchemy — um módulo por domínio
+├── schemas/                    # Pydantic — contratos de entrada/saída
+└── api/routes/                 # um router por domínio, cada um sob require_permission(...)
 ```
 
-`dev.sh` é idempotente (não derruba o que já está rodando) e serve pra iteração rápida — `http://127.0.0.1:5173` (frontend com HMR) + `http://127.0.0.1:8010` (API). Suporta os subcomandos `stop` (ou `stop --all`) e `status`. `pro.sh` builda uma imagem Docker única (frontend empacotado dentro do backend, tag `duplica:<VERSION>` + `duplica:latest`, gravando o commit atual) e sobe tudo containerizado em `http://127.0.0.1:8010` (frontend e API na mesma porta/origem). Ambos aplicam as migrations automaticamente. Ver `docs/SPEC.md` §3.17 para os detalhes.
+Cada domínio de frontend segue o mesmo formato: `types.ts` (tipos), `model/rules.ts` (regras puras, testadas isoladamente), `api/repository.ts` (chamadas HTTP, mapeamento snake_case ↔ camelCase), `model/queries.ts` (hooks TanStack Query) e `ui/<Domain>View.tsx` (componente de apresentação, sem lógica de rede própria).
 
-### Passo a passo manual (o que os scripts automatizam)
+Documentação técnica completa — decisões de arquitetura, contratos e histórico — em [`docs/SPEC.md`](docs/SPEC.md).
 
-### 1. Banco de dados (Postgres via Docker)
+## Como rodar
+
+### Modo dev (iteração rápida, nativo)
 
 ```bash
-cp .env.example .env   # preencha POSTGRES_PASSWORD e JWT_SECRET (valores aleatórios, nunca commitados)
+cp .env.example .env   # preencha POSTGRES_PASSWORD e JWT_SECRET
+./scripts/dev.sh       # Postgres (Docker) + backend (venv, --reload) + frontend (Vite, HMR)
+```
+
+- Frontend: `http://127.0.0.1:5173`
+- API: `http://127.0.0.1:8010`
+- `./scripts/dev.sh stop` / `stop --all` / `status` para controlar os serviços.
+
+Passo a passo manual (o que o script automatiza), caso prefira rodar cada peça à mão:
+
+```bash
+# 1. Banco
 docker compose up -d postgres
-```
 
-### 2. Backend (API)
-
-```bash
+# 2. Backend
 cd backend
 python3.11 -m venv .venv
 .venv/bin/pip install -r requirements.txt
-.venv/bin/alembic upgrade head       # cria as tabelas
-.venv/bin/python -m app.db.seed      # popula os dados demo (idempotente)
+.venv/bin/alembic upgrade head
+.venv/bin/python -m app.db.seed      # dados de demonstração (idempotente)
 .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8010
-```
 
-### 3. Frontend
-
-```bash
+# 3. Frontend
 npm install
 npm run dev
 ```
 
-Depois acesse a URL local exibida no terminal. O frontend espera a API em `http://127.0.0.1:8010` por padrão (configurável via `VITE_API_URL` no `.env` da raiz).
-
-## Validação
-
-```bash
-npm test
-npm run build
-```
-
-Os testes do frontend mockam a API (`src/test/mockApi.ts`) — não precisam do backend rodando. O backend ainda não tem suíte automatizada (`pytest`); validação hoje é manual via `curl` contra cada rota (ver `docs/SPEC.md` §13).
-
-## Deploy (produção, containerizado)
+### Modo produção (containerizado)
 
 ```bash
 ./scripts/pro.sh
 ```
 
-Builda a imagem Docker (única — backend serve o frontend estático buildado dentro dela, ver `Dockerfile`), aplica migrations e sobe Postgres + app via Docker Compose. `GET /api/v1/health` expõe `version` e `git_sha` da imagem em execução, pra confirmar que o container rodando é o do commit esperado. Rebuildar sem reiniciar o Postgres: `./scripts/build.sh && docker compose -p duplica up -d app`.
+Builda uma imagem Docker única (frontend estático servido pelo próprio backend), aplica as migrations e sobe tudo via Docker Compose em `http://127.0.0.1:8010`. `GET /api/v1/health` expõe `version` e `git_sha` da imagem em execução, para confirmar que o que está no ar corresponde ao commit esperado.
+
+## Testes
+
+```bash
+npm test         # Vitest — API mockada, não precisa do backend rodando
+npm run build    # typecheck (tsc --noEmit) + build de produção
+npm run test:e2e # Playwright, contra um Postgres/backend isolados (porta própria)
+```
+
+O backend ainda não tem suíte automatizada própria (`pytest`); validação de rota hoje é manual.
 
 ## Credenciais de demonstração
 
+> ⚠️ São dados de **seed** (`backend/app/db/seed.py`), pensados para ambiente local/demonstração. Troque as senhas antes de qualquer uso com dados reais.
+
 Login aceita usuário ou e-mail, no mesmo campo.
 
-| Perfil | Usuário | E-mail | Senha |
-|---|---|---|---|
-| Administrador | `admin` | `admin@grafica.local` | `admin123` |
-| Gerente | `gerente` | `gerente@grafica.local` | `gerente123` |
-| Operador | `operador` | `operador@grafica.local` | `operador123` |
-| Consulta | `consulta` | `consulta@grafica.local` | `consulta123` |
+| Perfil | Usuário | Senha |
+|---|---|---|
+| Administrador | `admin` | `admin123` |
+| Gerente | `gerente` | `gerente123` |
+| Operador | `operador` | `operador123` |
+| Consulta | `consulta` | `consulta123` |
 
-> Dados de seed (`backend/app/db/seed.py`) para ambiente local/demonstração — troque as senhas antes de qualquer uso real.
+## Licença
 
-## Arquitetura
-
-- **Frontend:** `src/domains/<domain>/` (types/rules/repository/View por domínio) + `src/shell/` (login, sidebar/topbar, tema) — ver `docs/SPEC.md` §3.6.
-- **Backend:** `backend/app/` (FastAPI + SQLAlchemy async + Alembic), um módulo por domínio (`db/models/`, `schemas/`, `api/routes/`), mesma intenção de isolamento do frontend.
-- `src/domains/<domain>/repository.ts` fala com a API via `src/lib/apiClient.ts` (fetch + JWT Bearer) — regras de negócio (`rules.ts`) e componentes de apresentação (`<Domain>View.tsx`) não sabem que existe uma API por trás.
-- Documentação completa em [`docs/SPEC.md`](docs/SPEC.md).
-
-## Resumo do que foi aplicado
-
-- Migração da UI de MVP em `localStorage` para persistência real em Postgres, com backend próprio (Python/FastAPI) e autenticação JWT.
-- Frontend reorganizado por domínio (`requests`, `units`, `users`, `reports`, `audit`), espelhando a separação de módulos do backend.
-- Tela de login e sidebar/menu de conta em Tailwind CSS (padrão hand-rolled "estilo shadcn"); as demais telas de conteúdo permanecem em CSS puro, exceto a tela de Solicitações, que também usa Tailwind nos ícones de ação, no formulário em tela cheia e no modal de confirmação de exclusão.
-- Tela de Solicitações dividida em consulta (lista) e edição/inclusão (formulário em tela cheia), com ações de editar/excluir por linha.
-- Log de auditoria das solicitações (criação, edição, exclusão, mudança de status), com expurgo automático agendado após 60 dias de retenção.
-- Upload de foto de perfil para usuários, armazenado em disco no backend.
-- Papéis Admin/Gerente/Operador/Consulta, tela de Perfis de Acesso (matriz fixa de permissões), login por usuário ou e-mail com sessão persistente ("permanecer conectado") e reforço de segurança pós-revisão (contra auto-promoção de papel, rate limit na troca de senha, senha mínima).
-- Deploy em dois modos formalizados (`scripts/dev.sh` nativo, `scripts/pro.sh` containerizado e versionado) — ver `docs/SPEC.md` §3.17.
-
-Histórico de decisões, trade-offs e o estado atual de cada seção está em [`docs/SPEC.md`](docs/SPEC.md).
+Uso interno — SEMED.
