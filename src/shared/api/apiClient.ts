@@ -1,4 +1,12 @@
-const API_URL = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8010";
+// Sem VITE_API_URL no ambiente de build, assume mesma origem (string vazia,
+// URLs relativas) em vez de um host fixo. Isso só é exercitado pelo build
+// de produção (Dockerfile) — a etapa de build do frontend ali não recebe um
+// .env, então cai neste fallback; como o "pro" mode serve frontend e API no
+// mesmo container/porta, relativo é o único valor que funciona não importa
+// por qual IP/hostname a página é acessada (127.0.0.1:8010 fixo quebrava
+// pra qualquer cliente que não fosse o próprio servidor). Dev/preview
+// continuam definindo VITE_API_URL explicitamente via .env na raiz.
+const API_URL = import.meta.env.VITE_API_URL ?? "";
 const TOKEN_KEY = "grafica.semed.token";
 
 export function apiAssetUrl(path: string): string {
