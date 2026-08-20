@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Modo produção (local): builda a imagem versionada (scripts/build.sh — frontend
-# empacotado dentro da mesma imagem do backend, ver Dockerfile), aplica
-# migrations e sobe Postgres + app via Docker Compose. Ao contrário de dev.sh,
-# sempre para uma instância anterior do serviço "app" antes de subir a nova —
-# um deploy deve sempre refletir o build mais recente.
+# empacotado dentro da mesma imagem do backend, ver Dockerfile), atualiza o
+# banco (scripts/db_update.sh — migrations) e sobe Postgres + app via Docker
+# Compose. Ao contrário de dev.sh, sempre para uma instância anterior do
+# serviço "app" antes de subir a nova — um deploy deve sempre refletir o
+# build mais recente.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -22,8 +23,8 @@ fi
 echo "-> aguardando Postgres ficar saudável..."
 until docker exec duplica_postgres pg_isready -U app -d duplica >/dev/null 2>&1; do sleep 1; done
 
-echo "-> aplicando migrations..."
-(cd backend && .venv/bin/alembic upgrade head)
+echo "-> atualizando banco de dados..."
+./scripts/db_update.sh
 
 echo "-> subindo app (imagem duplica:latest)..."
 docker compose -p duplica up -d app

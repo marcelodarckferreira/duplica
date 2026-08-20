@@ -16,13 +16,15 @@ Requer o Postgres do `docker-compose.yml` (raiz do projeto) no ar e um `.env` (r
 
 ## Nova migration
 
-Depois de alterar um model em `app/db/models/`:
+Depois de alterar um model em `app/db/models/` (mudança de schema):
 
 ```bash
 .venv/bin/alembic revision --autogenerate -m "descrição da mudança"
 ```
 
-Revise o arquivo gerado em `alembic/versions/` antes de aplicar (`alembic upgrade head`).
+Para uma migration que só atualiza valores já gravados, sem mudar schema (ex.: `05_..._rename_administrador_role_to_admin.py`, `13_..._rename_origin_values_to_escola_and_sede.py`), use `alembic revision -m "..."` (sem `--autogenerate`) e escreva o(s) `op.execute("UPDATE ...")` à mão no `upgrade()`/`downgrade()`.
+
+Os arquivos de migration **não** ficam no padrão do Alembic (`alembic/versions/`) — moram em `../docs/version/v01/` (fora de `backend/`, via `version_locations` em `alembic.ini`), com prefixo numérico sequencial (`01_`, `02_`, ...) só pra dar controle visual da ordem em que as atualizações do banco foram criadas. O Alembic identifica cada migration pelos campos internos `revision`/`down_revision`, não pelo nome/local do arquivo, então isso não afeta a execução. Ver `docs/version/DATABASE_UPDATES.md` para o índice completo e o histórico. Revise o arquivo gerado antes de aplicar (`alembic upgrade head`); ele já nasce em `docs/version/v01/`, então só falta renomeá-lo prefixando com o próximo número da sequência (ex.: depois de `13_...` vem `14_...`) e adicionar uma linha na tabela de histórico.
 
 ## Por que Python/FastAPI e não C#/ASP.NET Core
 
