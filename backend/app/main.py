@@ -41,7 +41,13 @@ async def lifespan(_app: FastAPI):
         scheduler.shutdown(wait=False)
 
 
-app = FastAPI(title="Duplica API", lifespan=lifespan)
+app = FastAPI(
+    title="Duplica API",
+    lifespan=lifespan,
+    docs_url="/docs" if settings.ENABLE_DOCS else None,
+    redoc_url="/redoc" if settings.ENABLE_DOCS else None,
+    openapi_url="/openapi.json" if settings.ENABLE_DOCS else None,
+)
 app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 

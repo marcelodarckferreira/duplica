@@ -22,6 +22,14 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "http://127.0.0.1:5173,http://127.0.0.1:4174"
 
+    # Desligado por padrão: /docs, /redoc e /openapi.json expõem o schema
+    # inteiro da API (rotas, payloads, modelos) publicamente. Sem valor real
+    # em produção (não há suíte de testes que dependa do Swagger UI — a
+    # validação de rota é manual via curl, ver CLAUDE.md), então o padrão
+    # seguro é desligado; habilite via .env (ENABLE_DOCS=true) só se precisar
+    # localmente.
+    ENABLE_DOCS: bool = False
+
     @property
     def database_url(self) -> str:
         return (
