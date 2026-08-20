@@ -142,7 +142,7 @@ export function RequestTable(props: {
                           <WhatsAppLink
                             phone={request.contact}
                             label={request.requester}
-                            message={`Olá, ${request.requester}! Sobre a solicitação ${request.code} (${request.documentDescription}): status atual é "${request.status}".`}
+                            message={`${request.productionOwner ? `${request.productionOwner}: ` : ""}Olá, sua solicitação ${request.code} (${request.documentDescription}) está com status "${request.status}".`}
                           />
                         )}
                         {props.onEdit && (
