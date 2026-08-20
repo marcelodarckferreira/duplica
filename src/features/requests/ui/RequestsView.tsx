@@ -195,12 +195,13 @@ function RequestForm(props: {
   users: User[];
   editingRequest: CopyRequest | undefined;
   canManageUnits: boolean;
+  currentUserName: string;
   onSubmit: (values: RequestDraft) => Promise<void>;
   onCancel: () => void;
   onCreateUnit: (draft: { name: string; origin: Origin; contact?: string }) => Promise<Unit>;
   onCreatePerson: (draft: { name: string; registrationNumber: string; phone: string; unitId: string }) => Promise<Person>;
 }) {
-  const { units, people, users, editingRequest, canManageUnits, onSubmit, onCancel, onCreateUnit, onCreatePerson } = props;
+  const { units, people, users, editingRequest, canManageUnits, currentUserName, onSubmit, onCancel, onCreateUnit, onCreatePerson } = props;
   const activeUsers = users.filter((account) => account.active);
   const unitSearchInputRef = useRef<HTMLInputElement>(null);
   const personSearchInputRef = useRef<HTMLInputElement>(null);
@@ -223,7 +224,13 @@ function RequestForm(props: {
                 person.name.toLocaleLowerCase("pt-BR") === editingRequest.requester.toLocaleLowerCase("pt-BR"),
             )?.id ?? "",
         }
-      : { ...emptyDraft, unitId: units.find((unit) => unit.origin === "Escola")?.id ?? "" },
+      : {
+          ...emptyDraft,
+          unitId: units.find((unit) => unit.origin === "Escola")?.id ?? "",
+          // Quem está criando a solicitação normalmente é quem vai produzi-la
+          // — evita ter que escolher o próprio nome na lista toda vez.
+          productionOwner: currentUserName,
+        },
   });
 
   const [origin, unitId, personId, pages, copies, duplex, productionOwner] = watch([
@@ -773,6 +780,7 @@ export function RequestsView(props: {
   canCreate: boolean;
   canUpdateProduction: boolean;
   canManageUnits: boolean;
+  currentUserName: string;
   onStartCreate: () => void;
   onSubmit: (values: RequestDraft) => Promise<void>;
   onEditRequest: (request: CopyRequest) => void;
@@ -802,6 +810,7 @@ export function RequestsView(props: {
     canCreate,
     canUpdateProduction,
     canManageUnits,
+    currentUserName,
     onStartCreate,
     onSubmit,
     onEditRequest,
@@ -1023,6 +1032,7 @@ export function RequestsView(props: {
         users={users}
         editingRequest={editingRequest}
         canManageUnits={canManageUnits}
+        currentUserName={currentUserName}
         onSubmit={onSubmit}
         onCancel={onCancelEdit}
         onCreateUnit={onCreateUnit}

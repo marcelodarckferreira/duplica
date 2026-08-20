@@ -590,6 +590,7 @@ export function AppShell() {
                 canCreate={canPerform(user.role, "createRequests")}
                 canUpdateProduction={canPerform(user.role, "updateProduction")}
                 canManageUnits={canPerform(user.role, "manageUnits")}
+                currentUserName={user.name}
                 onStartCreate={handleStartCreateRequest}
                 onSubmit={handleSubmitRequest}
                 onEditRequest={handleEditRequest}
