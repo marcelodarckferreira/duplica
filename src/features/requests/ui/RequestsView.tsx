@@ -22,6 +22,12 @@ import { requestDraftSchema } from "../schemas/schema";
 import { CopyRequest, RequestDraft, RequestStatus } from "../model/types";
 import { User } from "../../users/model/types";
 
+function buildStatusWhatsAppMessage(request: CopyRequest): string {
+  const signature = request.productionOwner ? `${request.productionOwner}: ` : "";
+  const pickup = request.status === "Entregue" && request.pickedUpBy ? ` Retirado por: ${request.pickedUpBy}.` : "";
+  return `${signature}Olá, sua solicitação ${request.code} (${request.documentDescription}) está com status "${request.status}".${pickup}`;
+}
+
 function Spinner(props: { className?: string }) {
   return (
     <span
@@ -142,7 +148,7 @@ export function RequestTable(props: {
                           <WhatsAppLink
                             phone={request.contact}
                             label={request.requester}
-                            message={`${request.productionOwner ? `${request.productionOwner}: ` : ""}Olá, sua solicitação ${request.code} (${request.documentDescription}) está com status "${request.status}".`}
+                            message={buildStatusWhatsAppMessage(request)}
                           />
                         )}
                         {props.onEdit && (
