@@ -69,7 +69,7 @@ Após login, o layout é `<Sidebar>` (`src/app/Sidebar.tsx`, padrão ForgeHub �
 
 Não existe mais item "Relatórios" na sidebar — seu conteúdo (consolidação mensal + ranking completo por unidade) foi incorporado à tela de Dashboard (2026-08-10, a pedido explícito — ver §5.2/§5.5).
 
-Colapsável (ícone-só ↔ expandida, botão no cabeçalho da sidebar, estado em `localStorage`). Item ativo marcado só por *pill* de fundo (`bg-white/15`) — sem borda lateral, sem indicador separado no ícone —, igual ao `bg-accent`/`text-accent-foreground` do ForgeHub. O menu de conta (avatar com iniciais, nome, perfil) fica no **rodapé da sidebar**, agora um `DropdownMenu` do Radix de verdade (2026-08-11, ver §2.2) — seção "Conta" (Minha conta/Alterar senha), seção "Tema" (Claro/Escuro/Sistema, com check no ativo) e "Sair", mesma estrutura do `UserSettingsMenu` do ForgeHub, mas com focus trap e navegação por teclado reais em vez de reimplementados à mão. A topbar (agora Tailwind, `src/app/AppShell.tsx`, desde 2026-08-11) hoje só exibe o título da view ativa.
+Colapsável (ícone-só ↔ expandida, botão no cabeçalho da sidebar, estado em `localStorage`). Item ativo marcado só por *pill* de fundo (`bg-white/15`) — sem borda lateral, sem indicador separado no ícone —, igual ao `bg-accent`/`text-accent-foreground` do ForgeHub. O menu de conta (avatar com iniciais, nome, perfil) fica no **rodapé da sidebar**, agora um `DropdownMenu` do Radix de verdade (2026-08-11, ver §2.2) — seção "Conta" (Minha conta/Alterar senha/Sobre), seção "Tema" (Claro/Escuro/Sistema, com check no ativo) e "Sair", mesma estrutura do `UserSettingsMenu` do ForgeHub, mas com focus trap e navegação por teclado reais em vez de reimplementados à mão. "Sobre" abre um diálogo autenticado com versões da aplicação, revisão Git e banco de dados, devolvendo o foco ao botão da conta ao fechar. A topbar (agora Tailwind, `src/app/AppShell.tsx`, desde 2026-08-11) hoje só exibe o título da view ativa.
 
 **Simplificação assumida vs. o ForgeHub:** sem overlay off-canvas para mobile (o ForgeHub tem um modo específico abaixo de 768px); a sidebar aqui usa a mesma largura colapsável em qualquer tamanho de tela, sem comportamento responsivo automático. Pode ser adicionado depois se necessário.
 
@@ -92,7 +92,7 @@ src/shared/    →  recursos reutilizáveis, independentes de qualquer feature e
                    testing/  → mockApi.ts, setup.ts (infraestrutura dos testes Vitest)
 ```
 
-Features: `requests` (solicitações), `units` (unidades/setores), `users` (contas, permissões e perfis de acesso — inclui `AccessProfilesView.tsx`), `audit` (log de auditoria, sem `schemas/` — não há formulário nesta feature), `reports` (métricas + ranking + consolidação mensal do Dashboard — lê `CopyRequest[]` da feature `requests`, sem `api/`/`schemas/` próprios), `account` (autoatendimento — `AccountModal`/`ChangePasswordModal`, reaproveita os schemas/tipos da feature `users`). Cada feature isolada em sua própria pasta, nunca lógica de outra feature. Do lado do backend (`backend/`), o mesmo isolamento continua existindo em Python: `app/db/models/`, `app/schemas/`, `app/api/routes/`, um arquivo por domínio.
+Features: `requests` (solicitações), `units` (unidades/setores), `users` (contas, permissões e perfis de acesso — inclui `AccessProfilesView.tsx`), `audit` (log de auditoria, sem `schemas/` — não há formulário nesta feature), `reports` (métricas + ranking + consolidação mensal do Dashboard — lê `CopyRequest[]` da feature `requests`, sem `api/`/`schemas` próprios), `account` (autoatendimento — `AccountModal`/`ChangePasswordModal`, reaproveita os schemas/tipos da feature `users`) e `system` (consulta autenticada e diálogo das versões da aplicação e do banco). Cada feature isolada em sua própria pasta, nunca lógica de outra feature. Do lado do backend (`backend/`), o mesmo isolamento continua existindo em Python: `app/db/models/`, `app/schemas/`, `app/api/routes/`, um arquivo por domínio.
 
 Esta reorganização foi aplicada em uma única leva (diferente da migração anterior, que foi domínio por domínio) porque é essencialmente mecânica — mover arquivos e corrigir caminhos de import, sem alterar lógica — e foi seguida de bateria completa de verificação (typecheck, 37 testes Vitest, build, varredura visual real no navegador em claro e escuro) antes de prosseguir. Ver estrutura final na seção 10.1.
 
@@ -139,8 +139,9 @@ Item "Perfis de Acesso" no grupo Administração da sidebar (`src/features/users
 - **`managePeople` (2026-08-20):** a tela Pessoas usava `manageUnits` emprestado (sem linha própria na matriz). Agora tem permissão dedicada — migração `14_..._add_manage_people_permission.py` concede `managePeople` a todo perfil que já tinha `manageUnits`, preservando o acesso existente.
 
 ### 3.13 Menu de conta: perfil próprio, senha e tema (2026-08-10, a pedido explícito, padrão ForgeHub)
-O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeHub: seção "Conta" (Minha conta / Alterar senha) + seção "Tema" (Claro/Escuro/Sistema, com check no ativo) + Sair.
+O dropdown de conta na sidebar (`Sidebar.tsx`) segue a mesma estrutura do ForgeHub: seção "Conta" (Minha conta / Alterar senha / Sobre) + seção "Tema" (Claro/Escuro/Sistema, com check no ativo) + Sair.
 - **Minha conta / Alterar senha:** dois modais (`src/features/account/ui/AccountModals.tsx`, `AccountModal`/`ChangePasswordModal`, Tailwind), ambos falando com `PATCH /api/v1/auth/me` (autoatendimento — qualquer usuário autenticado edita seu próprio nome/e-mail/senha, sem precisar de `manageUsers`; nunca altera papel/status). Trocar a senha exige a senha atual correta (`current_password`, verificada no backend antes de aceitar a nova) — proteção extra contra sequestro de sessão, que a edição feita por um Admin via tela de Usuários não tem (lá é o Admin que decide a senha de outra conta).
+- **Sobre:** modal somente informativo (`src/features/system/ui/AboutModal.tsx`) disponível para qualquer usuário autenticado. Consulta `GET /api/v1/system/version` ao abrir e exibe a versão semântica da aplicação (arquivo `VERSION`), a revisão Git incorporada à imagem (`GIT_SHA`) e a revisão Alembic realmente aplicada no banco (`alembic_version`). Mantém o diálogo aberto em falhas e oferece nova tentativa; o endpoint exige autenticação para não ampliar a superfície pública de diagnóstico.
 - **Tema em 3 vias:** `ThemeMode` passou de `"light" | "dark"` para `"light" | "dark" | "system"` (`src/app/theme.ts`). `resolveTheme(mode, prefersDark)` calcula o tema efetivamente aplicado (`data-theme`); no modo `"system"`, a preferência do SO é observada em tempo real via `matchMedia("(prefers-color-scheme: dark)")` (`AppShell.tsx`, listener de `change`), então uma troca de tema do SO com o app aberto reflete sem precisar recarregar.
 
 ### 3.14 Sessão persistente ("Permanecer conectado") e restauração ao recarregar (2026-08-10, a pedido explícito)
@@ -169,7 +170,7 @@ Dois modos formalizados, cada um com seu script em `scripts/` — nunca subir os
 - **`scripts/dev.sh`** — modo nativo (sem imagem Docker), pra iteração rápida: Postgres via `docker compose -p grafica up -d postgres`, migrations (`alembic upgrade head` via venv do host), backend (`uvicorn --reload`, venv) e frontend (Vite dev server, HMR) direto no host, cada um com PID/log em `.dev/` (gitignored). **Idempotente** — se um processo já está rodando (checado pelo PID salvo), não derruba, só avisa. Backend e frontend sobem via `( exec <binário> ) > log 2>&1 & echo $! > pidfile` — nunca via `npm run dev &`/`cmd &` direto, porque `$!` capturaria o PID do processo wrapper (`npm`, `sh -c`), não do processo real; matar o PID errado deixava o processo de verdade órfão rodando (bug real, encontrado e corrigido nesta mesma tarefa).
 - **`scripts/pro.sh`** — deploy containerizado e versionado: builda a imagem (`scripts/build.sh`), aplica migrations, sobe Postgres + app via `docker compose -p grafica up -d`, espera o healthcheck do container `grafica_app` ficar `healthy`. **Não é idempotente de propósito** — sempre reflete o build mais recente (para reiniciar sem rebuildar, usar o `docker compose` diretamente).
 - **`scripts/build.sh`** — builda com `--build-arg GIT_SHA=$(git rev-parse --short HEAD)`, re-tageia como `grafica:<VERSION>` (lido do arquivo `VERSION` na raiz) **e** `grafica:latest` — nunca usar `docker build`/`docker compose build` puro, mesma lição já documentada (e agora replicada de propósito) no `build.sh` do ForgeRouter: sem o re-tag manual, `latest` fica presa numa imagem antiga silenciosamente.
-- **`Dockerfile`** — imagem única, multi-stage: primeiro estágio builda o frontend (`node:22-slim`, `npm ci && npm run build`), segundo estágio é o backend (`python:3.11-slim`) com o `dist/` do primeiro estágio copiado pra dentro. O backend serve o frontend estático na raiz (`app.mount("/", StaticFiles(directory=DIST_DIR, html=True))`, `backend/app/main.py`, montado por último pra nunca sombrear `/api/v1/*` nem `/uploads`) — sem necessidade de fallback de rota SPA, já que o app não tem roteamento client-side (view ativa é estado local, não URL). `GET /api/v1/health` expõe `version` (do arquivo `VERSION`) e `git_sha` (da env `GIT_SHA`, gravada como `ARG` no build) — só populado de verdade no modo pro; no modo dev nativo aparece como `"unknown"` (não passa por build de imagem).
+- **`Dockerfile`** — imagem única, multi-stage: primeiro estágio builda o frontend (`node:22-slim`, `npm ci && npm run build`), segundo estágio é o backend (`python:3.11-slim`) com o `dist/` do primeiro estágio copiado pra dentro. O backend serve o frontend estático na raiz (`app.mount("/", StaticFiles(directory=DIST_DIR, html=True))`, `backend/app/main.py`, montado por último pra nunca sombrear `/api/v1/*` nem `/uploads`) — sem necessidade de fallback de rota SPA, já que o app não tem roteamento client-side (view ativa é estado local, não URL). `GET /api/v1/health` expõe publicamente `version` (do arquivo `VERSION`) e `git_sha` (da env `GIT_SHA`, gravada como `ARG` no build) — só populado de verdade no modo pro; no modo dev nativo aparece como `"unknown"` (não passa por build de imagem). A tela Sobre usa o endpoint autenticado `GET /api/v1/system/version`, que acrescenta a revisão corrente da tabela `alembic_version`.
 - **`docker-compose.yml`** ganhou o serviço `app` (imagem `grafica:latest`, porta `127.0.0.1:8010` — mesma postura localhost-only do Postgres, ver §3.16), com `POSTGRES_HOST=postgres`/`POSTGRES_PORT=5432` sobrescrevendo os defaults de `Settings` (que apontam pra `127.0.0.1:5435`, válido só pra quem roda fora da rede do compose) e um volume nomeado (`uploads_data`) pra persistir avatares entre deploys.
 - Migrations continuam rodando via venv do host em ambos os modos (não dentro do container) — mantém o fluxo já estabelecido a sessão inteira, sem precisar dar `docker exec` pra aplicar schema.
 
@@ -335,8 +336,9 @@ duplica/
 │   │   ├── audit/        # api/model/ui — sem schemas/ (não há formulário nesta feature, §3.7)
 │   │   ├── reports/      # model/rules.ts (+ rules.test.ts) + ui/DashboardView.tsx — sem api/schemas/
 │   │   │                  # próprios, lê CopyRequest[] da feature requests
-│   │   └── account/      # ui/AccountModals.tsx (AccountModal/ChangePasswordModal, §3.13) —
-│   │                       # reaproveita schemas/types de users
+│   │   ├── account/      # ui/AccountModals.tsx (AccountModal/ChangePasswordModal, §3.13) —
+│   │   │                  # reaproveita schemas/types de users
+│   │   └── system/       # api/model/ui — endpoint autenticado e diálogo Sobre com versões
 │   └── shared/
 │       ├── api/apiClient.ts   # fetch autenticado (Bearer JWT) + token em localStorage; VITE_API_URL
 │       ├── ui/                 # button.tsx, input.tsx, label.tsx, card.tsx, badge.tsx, checkbox.tsx,
@@ -351,7 +353,7 @@ duplica/
 │   │   ├── main.py         # FastAPI app, CORS restrito, rate limiter, scheduler de expurgo (§3.7),
 │   │   │                    # StaticFiles em /uploads (§3.9), inclui os routers
 │   │   ├── core/           # config.py (.env), security.py (bcrypt+JWT), deps.py, permissions.py,
-│   │   │                    # request_rules.py, slug.py, limiter.py, audit.py (record_audit(), §3.7)
+│   │   │                    # request_rules.py, slug.py, limiter.py, version.py, audit.py (§3.7)
 │   │   ├── db/
 │   │   │   ├── base.py     # engine/session async (SQLAlchemy + asyncpg)
 │   │   │   ├── models/     # user.py (com avatar_path), unit.py, request.py (CopyRequest +
@@ -360,13 +362,14 @@ duplica/
 │   │   │                    # bootstrap do banco de teste E2E isolado (ver §11.3)
 │   │   ├── schemas/        # Pydantic: user.py, unit.py, request.py, report.py, audit.py
 │   │   └── api/routes/     # auth.py, units.py, users.py (inclui upload de avatar, §3.9),
-│   │                        # requests.py, reports.py, audit.py (§3.7)
+│   │                        # requests.py, reports.py, audit.py (§3.7), system.py (versões)
 │   ├── scripts/
 │   │   └── e2e_bootstrap.sh   # recria o banco grafica_test do zero e sobe o backend de teste
 │   │                            # na porta 8011 (ver §11.3) — nunca toca no banco real
 │   ├── alembic/            # migrations versionadas (schema do Postgres)
 │   ├── uploads/             # avatares enviados (§3.9) — não versionado (.gitignore)
 │   ├── requirements.txt
+│   ├── tests/test_system_version.py # contrato e autenticação da rota de versões
 │   └── .venv/               # não versionado
 ├── data/               # scripts de init do Postgres (docker-entrypoint-initdb.d), ex.: 00-init.sql
 ├── public/

@@ -88,7 +88,8 @@ function noContent(): Promise<Response> {
   return Promise.resolve(new Response(null, { status: 204 }));
 }
 
-export function installMockApi() {
+export function installMockApi(options: { systemVersionFailures?: number } = {}) {
+  let remainingSystemVersionFailures = options.systemVersionFailures ?? 0;
   const units: MockUnit[] = [
     { id: "emef-paulo-freire", name: "EMEF Paulo Freire", origin: "ESCOLA", code: "ESC-001", contact: null, active: true },
     { id: "emef-ana-nery", name: "EMEF Ana Nery", origin: "ESCOLA", code: "ESC-002", contact: null, active: true },
@@ -269,6 +270,20 @@ export function installMockApi() {
       if (body.password) current.password = body.password;
       const { password: _password, ...rest } = current;
       return json(rest);
+    }
+
+    if (path === "/api/v1/system/version" && method === "GET") {
+      const authHeader = new Headers(init.headers).get("Authorization");
+      if (!authHeader) return json({ detail: "Credenciais inválidas." }, 401);
+      if (remainingSystemVersionFailures > 0) {
+        remainingSystemVersionFailures -= 1;
+        return json({ detail: "Não foi possível consultar as versões." }, 503);
+      }
+      return json({
+        application_version: "0.1.0",
+        git_sha: "535a164",
+        database_revision: "62ad30878cdf",
+      });
     }
 
     if (path === "/api/v1/units" && method === "GET") return json(units);

@@ -50,6 +50,36 @@ describe("AppShell user menu", () => {
     expect(window.localStorage.getItem("grafica.semed.theme")).toBe("dark");
   });
 
+  it("shows application and database versions from the account menu", async () => {
+    installMockApi();
+    const user = userEvent.setup();
+    renderShell();
+
+    await login(user);
+    await user.click(await screen.findByRole("button", { name: /abrir menu do usuário/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Sobre" }));
+
+    expect(await screen.findByRole("dialog", { name: "Sobre o Duplica" })).toBeTruthy();
+    expect(screen.getByText("0.1.0")).toBeTruthy();
+    expect(screen.getByText("535a164")).toBeTruthy();
+    expect(screen.getByText("62ad30878cdf")).toBeTruthy();
+  });
+
+  it("keeps the about dialog open and retries when versions cannot be loaded", async () => {
+    installMockApi({ systemVersionFailures: 1 });
+    const user = userEvent.setup();
+    renderShell();
+
+    await login(user);
+    await user.click(await screen.findByRole("button", { name: /abrir menu do usuário/i }));
+    await user.click(screen.getByRole("menuitem", { name: "Sobre" }));
+
+    expect((await screen.findByRole("alert")).textContent).toContain("Não foi possível consultar as versões.");
+    await user.click(screen.getByRole("button", { name: "Tentar novamente" }));
+
+    expect(await screen.findByText("62ad30878cdf")).toBeTruthy();
+  });
+
   it("restores the session from a stored token after a reload, on every screen", async () => {
     installMockApi();
     const user = userEvent.setup();

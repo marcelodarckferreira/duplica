@@ -49,6 +49,38 @@ test.describe("Acessibilidade — autenticado (axe-core, WCAG 2 A/AA)", () => {
     await expectNoSeriousViolations(page, ["aria-hidden-focus"]);
   });
 
+  test("diálogo Sobre exibe versões e permanece utilizável em tela estreita", async ({ page, request }) => {
+    const unauthorizedResponse = await request.get("http://127.0.0.1:8011/api/v1/system/version");
+    expect(unauthorizedResponse.status()).toBe(401);
+
+    await page.setViewportSize({ width: 360, height: 740 });
+    await page.goto("/");
+    await page.getByRole("button", { name: /abrir menu do usuário/i }).click();
+    await page.getByRole("menuitem", { name: "Sobre" }).click();
+
+    const dialog = page.getByRole("dialog", { name: "Sobre o Duplica" });
+    await expect(dialog).toBeVisible();
+    await expect(dialog.getByText("Versão da aplicação")).toBeVisible();
+    await expect(dialog.getByText("Revisão da aplicação")).toBeVisible();
+    await expect(dialog.getByText("Versão do banco de dados")).toBeVisible();
+
+    const box = await dialog.boundingBox();
+    expect(box).not.toBeNull();
+    expect(box!.x).toBeGreaterThanOrEqual(0);
+    expect(box!.x + box!.width).toBeLessThanOrEqual(360);
+    await expectNoSeriousViolations(page);
+
+    await page.setViewportSize({ width: 740, height: 360 });
+    const landscapeBox = await dialog.boundingBox();
+    expect(landscapeBox).not.toBeNull();
+    expect(landscapeBox!.y).toBeGreaterThanOrEqual(0);
+    expect(landscapeBox!.y + landscapeBox!.height).toBeLessThanOrEqual(360);
+
+    await page.keyboard.press("Escape");
+    await expect(dialog).toBeHidden();
+    await expect(page.getByRole("button", { name: /abrir menu do usuário/i })).toBeFocused();
+  });
+
   test("diálogo de exclusão (Radix Dialog)", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("button", { name: "Solicitações" }).click();

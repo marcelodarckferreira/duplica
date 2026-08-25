@@ -1,4 +1,3 @@
-import os
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -9,18 +8,15 @@ from fastapi.staticfiles import StaticFiles
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
-from app.api.routes import audit, auth, people, reports, requests, roles, units, users
+from app.api.routes import audit, auth, people, reports, requests, roles, system, units, users
 from app.api.routes.audit import purge_expired
 from app.api.routes.users import UPLOADS_DIR
 from app.core.config import settings
 from app.core.limiter import limiter
+from app.core.version import APPLICATION_VERSION, GIT_SHA
 from app.db.base import AsyncSessionLocal
 
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
-_VERSION_FILE = _PROJECT_ROOT / "VERSION"
-
-GIT_SHA = os.environ.get("GIT_SHA", "unknown")
-VERSION = _VERSION_FILE.read_text().strip() if _VERSION_FILE.exists() else "0.0.0"
 DIST_DIR = _PROJECT_ROOT / "dist"
 
 scheduler = AsyncIOScheduler()
@@ -71,11 +67,12 @@ app.include_router(requests.router)
 app.include_router(reports.router)
 app.include_router(audit.router)
 app.include_router(roles.router)
+app.include_router(system.router)
 
 
 @app.get("/api/v1/health")
 async def health() -> dict[str, str]:
-    return {"status": "ok", "version": VERSION, "git_sha": GIT_SHA}
+    return {"status": "ok", "version": APPLICATION_VERSION, "git_sha": GIT_SHA}
 
 
 # Frontend buildado (dist/), servido pela mesma imagem — ver §3.17 do SPEC e

@@ -1,10 +1,11 @@
-import { BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, RefreshCw, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
-import { useState } from "react";
+import { BadgeInfo, BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, RefreshCw, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 import { cn } from "../shared/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../shared/ui/dropdown-menu";
 import { Switch } from "../shared/ui/switch";
 import { User } from "../features/users/model/types";
 import { AccountModal, ChangePasswordModal } from "../features/account/ui/AccountModals";
+import { AboutModal } from "../features/system/ui/AboutModal";
 import { LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
@@ -65,6 +66,17 @@ export function Sidebar(props: {
   );
   const [isAccountModalOpen, setIsAccountModalOpen] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+  const [isAboutModalOpen, setIsAboutModalOpen] = useState(false);
+  const wasAboutModalOpen = useRef(false);
+
+  useEffect(() => {
+    if (wasAboutModalOpen.current && !isAboutModalOpen) {
+      window.setTimeout(() => {
+        document.querySelector<HTMLButtonElement>('[aria-label="Abrir menu do usuário"]')?.focus();
+      }, 0);
+    }
+    wasAboutModalOpen.current = isAboutModalOpen;
+  }, [isAboutModalOpen]);
 
   function toggleCollapsed() {
     setCollapsed((current) => {
@@ -191,6 +203,10 @@ export function Sidebar(props: {
               <Key size={16} />
               Alterar senha
             </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setIsAboutModalOpen(true)}>
+              <BadgeInfo size={16} />
+              Sobre
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuLabel>Configurações</DropdownMenuLabel>
             <DropdownMenuItem
@@ -240,6 +256,7 @@ export function Sidebar(props: {
         onUploadAvatar={onUploadAvatar}
       />
       <ChangePasswordModal open={isPasswordModalOpen} onClose={() => setIsPasswordModalOpen(false)} onSave={onChangePassword} />
+      <AboutModal open={isAboutModalOpen} onClose={() => setIsAboutModalOpen(false)} />
     </aside>
   );
 }
