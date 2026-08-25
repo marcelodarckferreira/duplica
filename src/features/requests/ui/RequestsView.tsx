@@ -1078,6 +1078,7 @@ export function RequestsView(props: {
                 ["Páginas", formatNumber(request.pages)],
                 ["Jogos / cópias", formatNumber(request.copies)],
                 ["Faces impressas", formatNumber(request.printedFaces)],
+                ["Folhas", formatNumber(request.consumedSheets)],
                 ["Resmas", formatReams(request.consumedSheets)],
                 ["Papel", request.paper],
                 ["Cor", request.colorMode],
