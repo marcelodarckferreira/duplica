@@ -114,18 +114,6 @@ export function calculatePrintTotals(input: {
   };
 }
 
-// Fila de produção: Urgente e Institucional saltam à frente de Normal;
-// dentro do mesmo nível, quem tem o prazo desejado mais próximo vai primeiro.
-const PRIORITY_ORDER: Record<Priority, number> = { Urgente: 0, Institucional: 1, Normal: 2 };
-
-export function sortRequestsByPriority(requests: CopyRequest[]): CopyRequest[] {
-  return [...requests].sort((a, b) => {
-    const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
-    if (priorityDiff !== 0) return priorityDiff;
-    return a.desiredDeadline.localeCompare(b.desiredDeadline);
-  });
-}
-
 export function filterRequests(
   requests: CopyRequest[],
   filters: {
@@ -133,10 +121,13 @@ export function filterRequests(
     status: RequestStatus | "Todos";
     origin: Origin | "Todas";
     unitId: string;
+    // Filtro pela data de emissão (requestedAt) — ambos opcionais, formato ISO "YYYY-MM-DD".
+    dateFrom?: string;
+    dateTo?: string;
   },
 ): CopyRequest[] {
   const normalized = filters.query.trim().toLocaleLowerCase("pt-BR");
-  const filtered = requests.filter((request) => {
+  return requests.filter((request) => {
     const matchesQuery = [
       request.code,
       request.unitName,
@@ -150,13 +141,36 @@ export function filterRequests(
     const matchesStatus = filters.status === "Todos" || request.status === filters.status;
     const matchesOrigin = filters.origin === "Todas" || request.origin === filters.origin;
     const matchesUnit = filters.unitId === "Todas" || request.unitId === filters.unitId;
-    return matchesQuery && matchesStatus && matchesOrigin && matchesUnit;
+    const matchesDateFrom = !filters.dateFrom || request.requestedAt >= filters.dateFrom;
+    const matchesDateTo = !filters.dateTo || request.requestedAt <= filters.dateTo;
+    return matchesQuery && matchesStatus && matchesOrigin && matchesUnit && matchesDateFrom && matchesDateTo;
   });
-  return sortRequestsByPriority(filtered);
+}
+
+// Colunas da tabela de Solicitações pelas quais dá pra ordenar (clicando no
+// título da coluna) — strings ISO como requestedAt/desiredDeadline ordenam
+// corretamente com localeCompare, sem precisar parsear como Date.
+export const requestSortKeys = ["code", "productionOwner", "unitName", "requester", "documentDescription", "status", "requestedAt", "desiredDeadline"] as const;
+export type RequestSortKey = (typeof requestSortKeys)[number];
+export type SortDirection = "asc" | "desc";
+
+export function sortRequests(requests: CopyRequest[], key: RequestSortKey, direction: SortDirection): CopyRequest[] {
+  const sorted = [...requests].sort((a, b) => a[key].localeCompare(b[key], "pt-BR"));
+  return direction === "asc" ? sorted : sorted.reverse();
 }
 
 export function formatNumber(value: number): string {
   return new Intl.NumberFormat("pt-BR").format(value);
+}
+
+// 1 resma = 500 folhas — mesma conversão usada no dashboard (ver toReams em
+// features/reports/model/rules.ts), duplicada aqui pra não inverter a
+// dependência de domínio (requests não deve importar de reports).
+const SHEETS_PER_REAM = 500;
+
+export function formatReams(consumedSheets: number): string {
+  const reams = Math.round((consumedSheets / SHEETS_PER_REAM) * 10) / 10;
+  return reams.toLocaleString("pt-BR");
 }
 
 export function formatDate(value: string): string {

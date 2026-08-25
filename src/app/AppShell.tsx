@@ -40,7 +40,7 @@ import {
   useUploadAvatarMutation,
   useUsersQuery,
 } from "../features/users/model/queries";
-import { filterRequests } from "../features/requests/model/rules";
+import { filterRequests, RequestSortKey, sortRequests, SortDirection } from "../features/requests/model/rules";
 import { CopyRequest, RequestDraft, RequestStatus } from "../features/requests/model/types";
 import { RequestsView } from "../features/requests/ui/RequestsView";
 import {
@@ -54,7 +54,8 @@ import {
 } from "../features/requests/model/queries";
 import { buildDashboardMetrics, getMonthlyConsolidation, getUnitConsumptionRanking, getUnitRanking } from "../features/reports/model/rules";
 import { DashboardView } from "../features/reports/ui/DashboardView";
-import { AuditLogEntry } from "../features/audit/model/types";
+import { AuditAction, AuditLogEntry } from "../features/audit/model/types";
+import { AuditSortKey, filterAuditEntries, sortAuditEntries, SortDirection as AuditSortDirection } from "../features/audit/model/rules";
 import { AuditView } from "../features/audit/ui/AuditView";
 import { useAuditQuery, useClearAuditMutation } from "../features/audit/model/queries";
 
@@ -81,6 +82,18 @@ export function AppShell() {
   const [query, setQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<RequestStatus | "Todos">("Todos");
   const [originFilter, setOriginFilter] = useState<Origin | "Todas">("Todas");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
+  // Padrão: mais recente primeiro pela data de emissão (requestedAt).
+  const [requestSortKey, setRequestSortKey] = useState<RequestSortKey>("requestedAt");
+  const [requestSortDirection, setRequestSortDirection] = useState<SortDirection>("desc");
+  const [auditSearchQuery, setAuditSearchQuery] = useState("");
+  const [auditActionFilter, setAuditActionFilter] = useState<AuditAction | "Todas">("Todas");
+  const [auditDateFrom, setAuditDateFrom] = useState("");
+  const [auditDateTo, setAuditDateTo] = useState("");
+  // Padrão: mais recente primeiro, mesmo critério de Solicitações.
+  const [auditSortKey, setAuditSortKey] = useState<AuditSortKey>("createdAt");
+  const [auditSortDirection, setAuditSortDirection] = useState<AuditSortDirection>("desc");
   const [editingRequestId, setEditingRequestId] = useState("");
   const [isCreatingRequest, setIsCreatingRequest] = useState(false);
   const [selectedRequestId, setSelectedRequestId] = useState("");
@@ -147,6 +160,32 @@ export function AppShell() {
   const auditEntries: AuditLogEntry[] = auditQuery.data ?? [];
   const clearAuditMutation = useClearAuditMutation();
 
+  const filteredAuditEntries = useMemo(
+    () =>
+      sortAuditEntries(
+        filterAuditEntries(auditEntries, { query: auditSearchQuery, action: auditActionFilter, dateFrom: auditDateFrom, dateTo: auditDateTo }),
+        auditSortKey,
+        auditSortDirection,
+      ),
+    [auditActionFilter, auditDateFrom, auditDateTo, auditEntries, auditSearchQuery, auditSortDirection, auditSortKey],
+  );
+
+  function handleAuditSort(key: AuditSortKey) {
+    if (key === auditSortKey) {
+      setAuditSortDirection((direction) => (direction === "asc" ? "desc" : "asc"));
+    } else {
+      setAuditSortKey(key);
+      setAuditSortDirection("asc");
+    }
+  }
+
+  function handleClearAuditFilters() {
+    setAuditSearchQuery("");
+    setAuditActionFilter("Todas");
+    setAuditDateFrom("");
+    setAuditDateTo("");
+  }
+
   const unitIdsWithRequests = useMemo(() => new Set(requests.map((request) => request.unitId)), [requests]);
   const personIdsWithRequests = useMemo(() => {
     const requesterNames = new Set(requests.map((request) => request.requester.toLocaleLowerCase("pt-BR")));
@@ -160,9 +199,31 @@ export function AppShell() {
   const monthly = useMemo(() => getMonthlyConsolidation(requests), [requests]);
 
   const filteredRequests = useMemo(
-    () => filterRequests(requests, { query, status: statusFilter, origin: originFilter, unitId: "Todas" }),
-    [originFilter, query, requests, statusFilter],
+    () =>
+      sortRequests(
+        filterRequests(requests, { query, status: statusFilter, origin: originFilter, unitId: "Todas", dateFrom, dateTo }),
+        requestSortKey,
+        requestSortDirection,
+      ),
+    [dateFrom, dateTo, originFilter, query, requestSortDirection, requestSortKey, requests, statusFilter],
   );
+
+  function handleRequestSort(key: RequestSortKey) {
+    if (key === requestSortKey) {
+      setRequestSortDirection((direction) => (direction === "asc" ? "desc" : "asc"));
+    } else {
+      setRequestSortKey(key);
+      setRequestSortDirection("asc");
+    }
+  }
+
+  function handleClearRequestFilters() {
+    setQuery("");
+    setStatusFilter("Todos");
+    setOriginFilter("Todas");
+    setDateFrom("");
+    setDateTo("");
+  }
 
   // Sem fallback pro primeiro item: o detalhe agora expande dentro da própria
   // linha da tabela (ver RequestsView), então "nada selecionado" deve
@@ -603,6 +664,14 @@ export function AppShell() {
                 onStatusFilterChange={setStatusFilter}
                 originFilter={originFilter}
                 onOriginFilterChange={setOriginFilter}
+                dateFrom={dateFrom}
+                onDateFromChange={setDateFrom}
+                dateTo={dateTo}
+                onDateToChange={setDateTo}
+                sortKey={requestSortKey}
+                sortDirection={requestSortDirection}
+                onSort={handleRequestSort}
+                onClearFilters={handleClearRequestFilters}
                 mode={isCreatingRequest || editingRequestId ? "form" : "list"}
                 editingRequest={editingRequest}
                 canEdit={canPerform(user.role, "editRequests")}
@@ -681,7 +750,23 @@ export function AppShell() {
             )}
 
             {activeView === "audit" && canManageAudit && (
-              <AuditView entries={auditEntries} canClear={canManageAudit} onClear={handleClearAudit} />
+              <AuditView
+                entries={filteredAuditEntries}
+                canClear={canManageAudit}
+                onClear={handleClearAudit}
+                query={auditSearchQuery}
+                onQueryChange={setAuditSearchQuery}
+                actionFilter={auditActionFilter}
+                onActionFilterChange={setAuditActionFilter}
+                dateFrom={auditDateFrom}
+                onDateFromChange={setAuditDateFrom}
+                dateTo={auditDateTo}
+                onDateToChange={setAuditDateTo}
+                sortKey={auditSortKey}
+                sortDirection={auditSortDirection}
+                onSort={handleAuditSort}
+                onClearFilters={handleClearAuditFilters}
+              />
             )}
           </>
         )}

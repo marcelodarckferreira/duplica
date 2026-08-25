@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { ArrowLeft, Check, ChevronDown, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, X } from "lucide-react";
+import { ArrowLeft, Check, ChevronDown, FilterX, Pencil, Plus, RefreshCw, Search, ShieldCheck, Trash2, X } from "lucide-react";
 import { Fragment, FormEvent, ReactNode, RefObject, useRef, useState } from "react";
 import { SignaturePad, SignaturePadHandle } from "../../../shared/ui/signature-pad";
 import { useForm } from "react-hook-form";
@@ -13,11 +13,12 @@ import { PrintButton, PrintReportHeader } from "../../../shared/ui/print-report"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "../../../shared/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "../../../shared/ui/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../shared/ui/select";
+import { filterSelectClasses, SortableHeader } from "../../../shared/ui/table-filters";
 import { cn, formatPhone } from "../../../shared/lib/utils";
 import { origins } from "../../units/model/rules";
 import { Origin, Unit } from "../../units/model/types";
 import { Person } from "../../people/model/types";
-import { calculatePrintTotals, colors, emptyDraft, formatDate, formatNumber, isStatusSelectable, layouts, papers, priorities, requestToDraft, staples, statuses, statusVariant } from "../model/rules";
+import { calculatePrintTotals, colors, emptyDraft, formatDate, formatNumber, formatReams, isStatusSelectable, layouts, papers, priorities, RequestSortKey, requestToDraft, SortDirection, staples, statuses, statusVariant } from "../model/rules";
 import { requestDraftSchema } from "../schemas/schema";
 import { CopyRequest, RequestDraft, RequestStatus } from "../model/types";
 import { User } from "../../users/model/types";
@@ -47,6 +48,9 @@ export function RequestTable(props: {
   renderStatusAction?: (request: CopyRequest) => ReactNode;
   onEdit?: (request: CopyRequest) => void;
   onDelete?: (request: CopyRequest) => void;
+  sortKey?: RequestSortKey;
+  sortDirection?: SortDirection;
+  onSort?: (key: RequestSortKey) => void;
 }) {
   const showActions = !props.compact && Boolean(props.onEdit || props.onDelete);
   const showExpand = !props.compact && Boolean(props.onToggleExpand && props.renderExpanded);
@@ -62,8 +66,13 @@ export function RequestTable(props: {
     1 +
     (showStatusAction ? 1 : 0) +
     (!props.compact ? 1 : 0) +
+    (!props.compact ? 1 : 0) +
     (showFaces ? 1 : 0) +
     (showActions ? 1 : 0);
+
+  function sortHeaderProps(sortKey: RequestSortKey) {
+    return { sortKey, activeSortKey: props.sortKey, sortDirection: props.sortDirection, onSort: props.onSort };
+  }
 
   return (
     <div className="overflow-x-auto">
@@ -71,14 +80,15 @@ export function RequestTable(props: {
         <thead>
           <tr>
             {showExpand && <th className="border-b border-border px-2.5 py-2.5 print:hidden" aria-label="Expandir" />}
-            <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Código</th>
-            {!props.compact && <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Responsável</th>}
-            {!props.compact && <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Local</th>}
-            {!props.compact && <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Solicitante</th>}
-            <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Documento</th>
-            <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Status</th>
+            <SortableHeader label="Código" {...sortHeaderProps("code")} />
+            {!props.compact && <SortableHeader label="Responsável" {...sortHeaderProps("productionOwner")} />}
+            {!props.compact && <SortableHeader label="Local" {...sortHeaderProps("unitName")} />}
+            {!props.compact && <SortableHeader label="Solicitante" {...sortHeaderProps("requester")} />}
+            <SortableHeader label="Documento" {...sortHeaderProps("documentDescription")} />
+            <SortableHeader label="Status" {...sortHeaderProps("status")} />
             {showStatusAction && <th className="border-b border-border px-2.5 py-2.5 print:hidden" aria-label="Alterar status" />}
-            {!props.compact && <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Prazo</th>}
+            {!props.compact && <SortableHeader label="Emissão" {...sortHeaderProps("requestedAt")} />}
+            {!props.compact && <SortableHeader label="Prazo" {...sortHeaderProps("desiredDeadline")} />}
             {showFaces && <th className="border-b border-border px-2.5 py-2.5 text-left text-xs uppercase text-muted">Faces</th>}
             {showActions && <th className="border-b border-border px-2.5 py-2.5 print:hidden" aria-label="Ações" />}
           </tr>
@@ -139,6 +149,7 @@ export function RequestTable(props: {
                       {props.renderStatusAction?.(request)}
                     </td>
                   )}
+                  {!props.compact && <td className="border-b border-border-soft px-2.5 py-2.5">{formatDate(request.requestedAt)}</td>}
                   {!props.compact && <td className="border-b border-border-soft px-2.5 py-2.5">{formatDate(request.desiredDeadline)}</td>}
                   {showFaces && <td className="border-b border-border-soft px-2.5 py-2.5">{formatNumber(request.printedFaces)}</td>}
                   {showActions && (
@@ -867,8 +878,6 @@ function DeliveryConfirmationScreen(props: {
   );
 }
 
-const filterSelectClasses = "h-11 w-full rounded border border-border bg-surface px-3 text-sm text-text shadow-none [appearance:none] focus:border-accent focus:outline-none";
-
 export function RequestsView(props: {
   units: Unit[];
   people: Person[];
@@ -882,6 +891,14 @@ export function RequestsView(props: {
   onStatusFilterChange: (value: RequestStatus | "Todos") => void;
   originFilter: Origin | "Todas";
   onOriginFilterChange: (value: Origin | "Todas") => void;
+  dateFrom: string;
+  onDateFromChange: (value: string) => void;
+  dateTo: string;
+  onDateToChange: (value: string) => void;
+  sortKey: RequestSortKey;
+  sortDirection: SortDirection;
+  onSort: (key: RequestSortKey) => void;
+  onClearFilters: () => void;
   mode: "list" | "form";
   editingRequest: CopyRequest | undefined;
   canEdit: boolean;
@@ -914,6 +931,14 @@ export function RequestsView(props: {
     onStatusFilterChange,
     originFilter,
     onOriginFilterChange,
+    dateFrom,
+    onDateFromChange,
+    dateTo,
+    onDateToChange,
+    sortKey,
+    sortDirection,
+    onSort,
+    onClearFilters,
     mode,
     editingRequest,
     canEdit,
@@ -1052,6 +1077,8 @@ export function RequestsView(props: {
               [
                 ["Páginas", formatNumber(request.pages)],
                 ["Jogos / cópias", formatNumber(request.copies)],
+                ["Faces impressas", formatNumber(request.printedFaces)],
+                ["Resmas", formatReams(request.consumedSheets)],
                 ["Papel", request.paper],
                 ["Cor", request.colorMode],
                 ["Prioridade", request.priority],
@@ -1171,14 +1198,20 @@ export function RequestsView(props: {
     );
   }
 
+  const dateRangeSummary =
+    dateFrom || dateTo
+      ? `emissão: ${dateFrom ? formatDate(dateFrom) : "…"} a ${dateTo ? formatDate(dateTo) : "…"}`
+      : null;
   const filterSummary = [
     `${filteredRequests.length} solicitação(ões)`,
     statusFilter !== "Todos" ? `status: ${statusFilter}` : null,
     originFilter !== "Todas" ? `origem: ${originFilter}` : null,
+    dateRangeSummary,
     query.trim() ? `busca: "${query.trim()}"` : null,
   ]
     .filter(Boolean)
     .join(" — ");
+  const hasActiveFilters = Boolean(query.trim() || statusFilter !== "Todos" || originFilter !== "Todas" || dateFrom || dateTo);
 
   return (
     <>
@@ -1191,7 +1224,7 @@ export function RequestsView(props: {
         <PrintButton />
       </div>
       <Card>
-        <div className="mb-3.5 grid grid-cols-1 items-end gap-2.5 sm:grid-cols-2 lg:grid-cols-[minmax(220px,1fr)_160px_160px_190px] print:hidden">
+        <div className="mb-3.5 grid grid-cols-1 items-end gap-x-5 gap-y-3 sm:grid-cols-2 lg:grid-cols-[minmax(200px,1fr)_130px_130px_138px_138px_48px_180px] print:hidden">
           <label className="relative block">
             <Search size={17} className="pointer-events-none absolute left-2.5 top-1/2 -translate-y-1/2 text-muted" />
             <input
@@ -1219,9 +1252,39 @@ export function RequestsView(props: {
               ))}
             </select>
           </label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase text-label">
+            Emissão de
+            <input
+              type="date"
+              value={dateFrom}
+              max={dateTo || undefined}
+              onChange={(event) => onDateFromChange(event.target.value)}
+              className={cn(filterSelectClasses, "px-2")}
+            />
+          </label>
+          <label className="grid gap-1.5 text-xs font-bold uppercase text-label">
+            Emissão até
+            <input
+              type="date"
+              value={dateTo}
+              min={dateFrom || undefined}
+              onChange={(event) => onDateToChange(event.target.value)}
+              className={cn(filterSelectClasses, "px-2")}
+            />
+          </label>
+          <button
+            type="button"
+            onClick={onClearFilters}
+            disabled={!hasActiveFilters}
+            aria-label="Limpar filtros"
+            title="Limpar filtros"
+            className="grid h-11 w-11 shrink-0 place-items-center self-end rounded border border-border bg-surface text-muted [appearance:none] hover:border-accent hover:text-accent focus:border-accent focus:outline-none disabled:pointer-events-none disabled:opacity-40"
+          >
+            <FilterX size={18} />
+          </button>
           {canCreate && (
-            <Button type="button" onClick={onStartCreate} className="self-end sm:col-span-2 lg:col-span-1">
-              <Plus size={17} />
+            <Button type="button" size="sm" onClick={onStartCreate} className="h-11 w-full whitespace-nowrap self-end sm:col-span-2 lg:col-span-1">
+              <Plus size={16} />
               Nova solicitação
             </Button>
           )}
@@ -1234,6 +1297,9 @@ export function RequestsView(props: {
           renderStatusAction={renderStatusAction}
           onEdit={canEdit ? onEditRequest : undefined}
           onDelete={canEdit ? (request) => setPendingDelete(request) : undefined}
+          sortKey={sortKey}
+          sortDirection={sortDirection}
+          onSort={onSort}
         />
       </Card>
 

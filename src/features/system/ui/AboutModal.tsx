@@ -1,4 +1,4 @@
-import { BadgeInfo, Database, GitCommitHorizontal, PackageCheck, RefreshCw } from "lucide-react";
+import { BadgeInfo, Container, Database, GitCommitHorizontal, PackageCheck, RefreshCw } from "lucide-react";
 import { Button } from "../../../shared/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "../../../shared/ui/dialog";
 import { useSystemVersionQuery } from "../model/queries";
@@ -42,7 +42,8 @@ export function AboutModal(props: {
           <DialogTitle>Sobre o Duplica</DialogTitle>
         </DialogHeader>
         <DialogDescription className="m-0">
-          Informações da versão atualmente conectada.
+          Informações da versão atualmente conectada. Frontend e backend são um único artefato —
+          sobem juntos com o mesmo número de versão e a mesma imagem Docker.
         </DialogDescription>
 
         <div className="flex items-center gap-3 rounded-lg bg-accent-strong px-4 py-3 text-white">
@@ -55,9 +56,9 @@ export function AboutModal(props: {
           </div>
         </div>
 
-        <div className="min-h-[194px]" aria-live="polite">
+        <div className="min-h-[252px]" aria-live="polite">
           {versionQuery.isLoading && (
-            <div className="grid min-h-[194px] place-items-center" role="status">
+            <div className="grid min-h-[252px] place-items-center" role="status">
               <span className="inline-flex items-center gap-2 text-sm font-medium text-muted">
                 <RefreshCw size={16} className="animate-spin motion-reduce:animate-none" aria-hidden="true" />
                 Consultando versões…
@@ -66,7 +67,7 @@ export function AboutModal(props: {
           )}
 
           {versionQuery.isError && (
-            <div className="grid min-h-[194px] place-items-center rounded border border-border bg-status-cancelado-bg p-4 text-center">
+            <div className="grid min-h-[252px] place-items-center rounded border border-border bg-status-cancelado-bg p-4 text-center">
               <div>
                 <p className="m-0 mb-3 text-sm font-bold text-status-cancelado-fg" role="alert">{errorMessage}</p>
                 <Button type="button" variant="soft" size="sm" onClick={() => versionQuery.refetch()} disabled={versionQuery.isFetching}>
@@ -79,8 +80,9 @@ export function AboutModal(props: {
 
           {versionQuery.data && (
             <div className="grid gap-2" role="group" aria-label="Versões do sistema">
-              <VersionRow icon={PackageCheck} label="Versão da aplicação" value={versionQuery.data.applicationVersion} />
-              <VersionRow icon={GitCommitHorizontal} label="Revisão da aplicação" value={versionQuery.data.gitSha} />
+              <VersionRow icon={PackageCheck} label="Versão do app (frontend + backend)" value={versionQuery.data.applicationVersion} />
+              <VersionRow icon={GitCommitHorizontal} label="Versão GitHub" value={versionQuery.data.gitSha} />
+              <VersionRow icon={Container} label="Imagem Docker" value={`duplica:${versionQuery.data.applicationVersion}`} />
               <VersionRow icon={Database} label="Versão do banco de dados" value={versionQuery.data.databaseRevision} />
             </div>
           )}

@@ -6,22 +6,13 @@ import { Switch } from "../shared/ui/switch";
 import { User } from "../features/users/model/types";
 import { AccountModal, ChangePasswordModal } from "../features/account/ui/AccountModals";
 import { AboutModal } from "../features/system/ui/AboutModal";
+import { Avatar } from "../shared/ui/avatar";
 import { LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
 export type ShellView = "dashboard" | "requests" | "units" | "people" | "users" | "profiles" | "audit";
 
 const COLLAPSE_STORAGE_KEY = "grafica.semed.sidebarCollapsed";
-
-function getInitials(name: string) {
-  return name
-    .split(" ")
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join("")
-    .toLocaleUpperCase("pt-BR");
-}
 
 function navLinkClasses(isActive: boolean, collapsed: boolean) {
   return cn(
@@ -178,13 +169,9 @@ export function Sidebar(props: {
                 collapsed && "justify-center",
               )}
             >
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt={user.name} className="h-8 w-8 shrink-0 rounded-full object-cover" />
-              ) : (
-                <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-accent-strong text-xs font-bold text-white">
-                  {getInitials(user.name)}
-                </span>
-              )}
+              <span className="shrink-0">
+                <Avatar name={user.name} avatarUrl={user.avatarUrl} size={32} />
+              </span>
               {!collapsed && (
                 <span className="min-w-0 flex-1">
                   <span className="block truncate text-xs font-medium text-white">{user.name}</span>
