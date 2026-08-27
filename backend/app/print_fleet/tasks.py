@@ -11,12 +11,16 @@ from app.print_fleet.types import BatchStatus, DiscoveryRunStatus
 STALE_AFTER = timedelta(minutes=5)
 
 
-def build_claim_run_statement(stale_before: datetime):
+def build_claim_run_statement(stale_before: datetime, worker_id: str):
     return (
         select(DiscoveryRun)
         .where(
             or_(
                 DiscoveryRun.status == DiscoveryRunStatus.PENDING.value,
+                (
+                    (DiscoveryRun.status == DiscoveryRunStatus.RUNNING.value)
+                    & (DiscoveryRun.worker_id == worker_id)
+                ),
                 (
                     (DiscoveryRun.status == DiscoveryRunStatus.RUNNING.value)
                     & (DiscoveryRun.heartbeat_at < stale_before)
@@ -35,7 +39,7 @@ async def claim_next_run(
     now: datetime | None = None,
 ) -> DiscoveryRun | None:
     claimed_at = now or datetime.now(timezone.utc)
-    result = await db.execute(build_claim_run_statement(claimed_at - STALE_AFTER))
+    result = await db.execute(build_claim_run_statement(claimed_at - STALE_AFTER, worker_id))
     run = result.scalar_one_or_none()
     if run is None:
         return None
@@ -148,4 +152,3 @@ async def finalize_run_if_finished(
     run.heartbeat_at = run.finished_at
     await db.commit()
     return True
-

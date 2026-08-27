@@ -1,8 +1,12 @@
 import asyncio
 import signal
+import socket
+from functools import partial
 from collections.abc import Awaitable, Callable
 
 from app.core.config import settings
+from app.print_fleet.discovery import process_discovery_cycle
+from app.print_fleet.snmp import PysnmpTransport
 
 WorkerCycle = Callable[[], Awaitable[bool]]
 
@@ -24,16 +28,20 @@ async def run_worker(
             pass
 
 
-async def _idle_cycle() -> bool:
-    return False
-
-
 async def main() -> None:
     stop_event = asyncio.Event()
     loop = asyncio.get_running_loop()
     for signal_name in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(signal_name, stop_event.set)
-    await run_worker(stop_event, _idle_cycle)
+    transport = PysnmpTransport()
+    worker_id = f"{socket.gethostname()}:{id(transport)}"
+    try:
+        await run_worker(
+            stop_event,
+            partial(process_discovery_cycle, transport, worker_id),
+        )
+    finally:
+        await transport.aclose()
 
 
 if __name__ == "__main__":

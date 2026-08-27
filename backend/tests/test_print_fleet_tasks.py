@@ -37,13 +37,14 @@ def test_claim_statement_uses_skip_locked_and_stale_recovery() -> None:
     stale_before = datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)
 
     sql = str(
-        build_claim_run_statement(stale_before).compile(
+        build_claim_run_statement(stale_before, "worker-1").compile(
             dialect=postgresql.dialect(), compile_kwargs={"literal_binds": True}
         )
     )
 
     assert "FOR UPDATE SKIP LOCKED" in sql
     assert "discovery_runs.status = 'PENDING'" in sql
+    assert "discovery_runs.worker_id = 'worker-1'" in sql
     assert "discovery_runs.heartbeat_at <" in sql
 
 
@@ -97,7 +98,6 @@ def test_terminal_status_distinguishes_errors_and_total_failure() -> None:
 
 def test_stale_cutoff_is_five_minutes_before_claim_time() -> None:
     now = datetime(2026, 8, 27, 12, 5, tzinfo=timezone.utc)
-    statement = build_claim_run_statement(now - timedelta(minutes=5))
+    statement = build_claim_run_statement(now - timedelta(minutes=5), "worker-1")
 
     assert statement is not None
-
