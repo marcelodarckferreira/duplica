@@ -16,6 +16,8 @@ ALL_PERMISSIONS: set[Permission] = {
     "managePeople",
     "manageUsers",
     "manageAudit",
+    "viewPrintFleet",
+    "managePrintFleet",
 }
 
 # Valores usados só para semear a tabela role_permissions na migração inicial
@@ -31,6 +33,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[str, set[Permission]] = {
         "managePeople",
         "manageUsers",
         "manageAudit",
+        "viewPrintFleet",
+        "managePrintFleet",
     },
     "Gerente": {
         "viewDashboard",

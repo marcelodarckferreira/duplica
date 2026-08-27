@@ -44,6 +44,8 @@ tabelas em nenhum passo.
 | 11 | `4245329c67ae` | Amplia coluna `paper` em `copy_requests` |
 | 12 | `c6ab4b463b02` | `signature` em `copy_requests` |
 | 13 | `98d763f27206` | Renomeia valores de `origin` para `ESCOLA`/`SEDE` (valores) |
+| 14 | `62ad30878cdf` | Permissão independente `managePeople` |
+| 15 | `f2a8c4e1d9b7` | Descoberta, cadastro e monitoramento do parque de impressão |
 
 ## Criar uma nova atualização
 
