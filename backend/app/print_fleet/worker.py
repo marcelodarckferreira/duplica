@@ -1,11 +1,10 @@
 import asyncio
 import signal
 import socket
-from functools import partial
 from collections.abc import Awaitable, Callable
 
 from app.core.config import settings
-from app.print_fleet.discovery import process_discovery_cycle
+from app.print_fleet.monitoring import PrintFleetWorkerCycle
 from app.print_fleet.snmp import PysnmpTransport
 
 WorkerCycle = Callable[[], Awaitable[bool]]
@@ -36,10 +35,7 @@ async def main() -> None:
     transport = PysnmpTransport()
     worker_id = f"{socket.gethostname()}:{id(transport)}"
     try:
-        await run_worker(
-            stop_event,
-            partial(process_discovery_cycle, transport, worker_id),
-        )
+        await run_worker(stop_event, PrintFleetWorkerCycle(transport, worker_id))
     finally:
         await transport.aclose()
 
