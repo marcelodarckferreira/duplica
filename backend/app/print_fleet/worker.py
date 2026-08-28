@@ -5,9 +5,17 @@ from collections.abc import Awaitable, Callable
 
 from app.core.config import settings
 from app.print_fleet.monitoring import PrintFleetWorkerCycle
-from app.print_fleet.snmp import PysnmpTransport
+from app.print_fleet.snmp import PysnmpTransport, SimulatedSnmpTransport, SnmpTransport
 
 WorkerCycle = Callable[[], Awaitable[bool]]
+
+
+def create_transport(name: str) -> SnmpTransport:
+    if name == "simulated":
+        return SimulatedSnmpTransport()
+    if name != "pysnmp":
+        raise ValueError("PRINT_FLEET_SNMP_TRANSPORT deve ser 'pysnmp' ou 'simulated'.")
+    return PysnmpTransport()
 
 
 async def run_worker(
@@ -32,7 +40,7 @@ async def main() -> None:
     loop = asyncio.get_running_loop()
     for signal_name in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(signal_name, stop_event.set)
-    transport = PysnmpTransport()
+    transport = create_transport(settings.PRINT_FLEET_SNMP_TRANSPORT)
     worker_id = f"{socket.gethostname()}:{id(transport)}"
     try:
         await run_worker(stop_event, PrintFleetWorkerCycle(transport, worker_id))

@@ -1,4 +1,4 @@
-import { BadgeInfo, BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, RefreshCw, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
+import { BadgeInfo, BarChart3, Building2, Check, ChevronsLeft, ChevronsRight, ClipboardList, Contact, Key, Lock, LogOut, Monitor, Moon, Printer, RefreshCw, ShieldCheck, Sun, User as UserIcon, Users } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { cn } from "../shared/lib/utils";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "../shared/ui/dropdown-menu";
@@ -10,7 +10,7 @@ import { Avatar } from "../shared/ui/avatar";
 import { LogoMark } from "./Logo";
 import { ThemeMode } from "./theme";
 
-export type ShellView = "dashboard" | "requests" | "units" | "people" | "users" | "profiles" | "audit";
+export type ShellView = "dashboard" | "requests" | "units" | "people" | "printFleet" | "users" | "profiles" | "audit";
 
 const COLLAPSE_STORAGE_KEY = "grafica.semed.sidebarCollapsed";
 
@@ -27,6 +27,7 @@ export function Sidebar(props: {
   onChangeView: (view: ShellView) => void;
   canManageUsers: boolean;
   canManageAudit: boolean;
+  canViewPrintFleet: boolean;
   user: User;
   theme: ThemeMode;
   onChangeTheme: (theme: ThemeMode) => void;
@@ -42,6 +43,7 @@ export function Sidebar(props: {
     onChangeView,
     canManageUsers,
     canManageAudit,
+    canViewPrintFleet,
     user,
     theme,
     onChangeTheme,
@@ -85,6 +87,7 @@ export function Sidebar(props: {
         { view: "requests" as const, label: "Solicitações", icon: ClipboardList },
         { view: "units" as const, label: "Locais", icon: Building2 },
         { view: "people" as const, label: "Pessoas", icon: Contact },
+        ...(canViewPrintFleet ? [{ view: "printFleet" as const, label: "Parque de impressão", icon: Printer }] : []),
       ],
     },
     {

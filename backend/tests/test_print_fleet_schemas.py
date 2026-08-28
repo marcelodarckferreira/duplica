@@ -1,10 +1,14 @@
 import pytest
+from datetime import datetime, timezone
+from ipaddress import IPv4Address
+from types import SimpleNamespace
 from pydantic import ValidationError
 
 from app.schemas.print_fleet import (
     DiscoveryNetworkCreate,
     DiscoveryNetworkOut,
     ManualPrinterCreate,
+    PrinterOut,
     SupplyThresholdUpdate,
 )
 
@@ -70,6 +74,23 @@ def test_manual_printer_requires_network_address_name_and_sector() -> None:
             display_name="",
             unit_id="",
         )
+
+
+def test_printer_output_accepts_postgresql_inet_value() -> None:
+    now = datetime.now(timezone.utc)
+    printer = SimpleNamespace(
+        id="printer-1", discovery_network_id="network-1",
+        management_address=IPv4Address("172.15.10.2"), mac_address=None,
+        serial_number=None, sys_object_id=None, sys_name=None, sys_description=None,
+        manufacturer="HP", model="LaserJet", display_name="HP Sede", unit_id=None,
+        onboarding_status="PENDING", monitoring_enabled=False,
+        operational_status="UNKNOWN", normalized_errors=[], consecutive_poll_failures=0,
+        first_seen_at=now, last_seen_at=None, last_polled_at=None, updated_at=now,
+    )
+
+    output = PrinterOut.model_validate(printer)
+
+    assert output.management_address == "172.15.10.2"
 
 
 @pytest.mark.parametrize(("warning", "critical"), [(20, 20), (10, 20), (101, 10), (20, -1)])

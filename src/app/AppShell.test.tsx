@@ -98,6 +98,16 @@ describe("AppShell user menu", () => {
     }
   });
 
+  it("opens the headquarters print fleet for an authorized admin", async () => {
+    installMockApi();
+    const user = userEvent.setup();
+    renderShell();
+    await login(user);
+    await user.click(await screen.findByRole("button", { name: "Parque de impressão" }));
+    expect(await screen.findByRole("heading", { name: "Parque de impressão" })).toBeTruthy();
+    expect(screen.getByRole("tab", { name: "Redes" })).toBeTruthy();
+  });
+
   it("edits the own profile and changes the own password from the account menu", async () => {
     installMockApi();
     const user = userEvent.setup();

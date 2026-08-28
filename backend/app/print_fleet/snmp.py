@@ -53,6 +53,8 @@ class SnmpTransport(Protocol):
         retries: int,
     ) -> list[tuple[str, Any]]: ...
 
+    async def aclose(self) -> None: ...
+
 
 def _python_value(value: Any) -> Any:
     if hasattr(value, "asOctets"):
@@ -136,6 +138,60 @@ class PysnmpTransport:
 
     async def aclose(self) -> None:
         self._engine.close_dispatcher()
+
+
+class SimulatedSnmpTransport:
+    """Deterministic adapter for isolated E2E only; never selected by default."""
+
+    @staticmethod
+    def _responds(address: str) -> bool:
+        return address.rsplit(".", 1)[-1] == "2"
+
+    async def get(
+        self,
+        address: str,
+        community: str,
+        oids: Sequence[str],
+        timeout_ms: int,
+        retries: int,
+    ) -> dict[str, Any]:
+        if not self._responds(address):
+            raise SnmpRequestError("TIMEOUT", "Equipamento simulado não respondeu.")
+        values = {
+            SYS_DESCRIPTION: "HP LaserJet Pro M404dn",
+            SYS_OBJECT_ID: "1.3.6.1.4.1.11.2.3.9.1",
+            SYS_NAME: "HP-SEDE-E2E",
+        }
+        return {oid: values.get(oid, "") for oid in oids}
+
+    async def walk(
+        self,
+        address: str,
+        community: str,
+        base_oid: str,
+        timeout_ms: int,
+        retries: int,
+    ) -> list[tuple[str, Any]]:
+        if not self._responds(address):
+            raise SnmpRequestError("TIMEOUT", "Equipamento simulado não respondeu.")
+        suffix = ".1.1"
+        values: dict[str, Any] = {
+            HR_DEVICE_TYPE: HR_DEVICE_PRINTER,
+            PRT_GENERAL_PRINTER_NAME: "HP Sede E2E",
+            PRT_GENERAL_SERIAL_NUMBER: "E2E-HP-0001",
+            HR_PRINTER_STATUS: 3,
+            HR_PRINTER_ERROR_STATE: b"\x00\x00",
+            PRT_SUPPLIES_DESCRIPTION: "Black Toner Cartridge",
+            PRT_SUPPLIES_TYPE: 3,
+            PRT_SUPPLIES_UNIT: 19,
+            PRT_SUPPLIES_MAX_CAPACITY: 100,
+            PRT_SUPPLIES_LEVEL: 18,
+        }
+        value = values.get(base_oid)
+        return [] if value is None else [(f"{base_oid}{suffix}", value)]
+
+    async def aclose(self) -> None:
+        return None
 
 
 def is_printer_device(rows: Sequence[tuple[str, Any]]) -> bool:

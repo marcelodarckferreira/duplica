@@ -12,6 +12,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     "managePeople",
     "manageUsers",
     "manageAudit",
+    "viewPrintFleet",
+    "managePrintFleet",
   ],
   Gerente: [
     "viewDashboard",

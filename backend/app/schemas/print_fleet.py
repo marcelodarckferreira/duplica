@@ -201,6 +201,11 @@ class PrinterOut(BaseModel):
     last_polled_at: datetime | None
     updated_at: datetime
 
+    @field_validator("management_address", mode="before")
+    @classmethod
+    def _serialize_management_address(cls, value: object) -> str:
+        return str(value)
+
 
 class PaginatedPrintersOut(BaseModel):
     items: list[PrinterOut]

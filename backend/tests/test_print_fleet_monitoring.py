@@ -1,10 +1,15 @@
+import asyncio
 from datetime import datetime, timedelta, timezone
+from unittest.mock import AsyncMock
 
 from app.db.models.print_fleet import Printer, SupplyReading
 from app.print_fleet.monitoring import (
+    SupplySnapshot,
+    _new_supply,
     apply_poll_failure,
     apply_poll_success,
     parse_supply_rows,
+    purge_expired_operational_data,
     should_record_reading,
 )
 from app.print_fleet.snmp import (
@@ -66,6 +71,22 @@ def test_ignores_incomplete_rows_without_level_or_capacity() -> None:
     assert parse_supply_rows(rows) == []
 
 
+def test_new_supply_is_complete_before_first_flush() -> None:
+    now = datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc)
+    snapshot = SupplySnapshot(
+        snmp_index="1.1", description_raw="Black Toner", type_raw=3,
+        normalized_type=SupplyType.TONER, color=SupplyColor.BLACK,
+        capacity_raw=100, level_raw=18, capacity_unit_raw=19,
+        level_percent=18, alert_status=SupplyAlert.WARNING,
+    )
+
+    supply = _new_supply("printer-1", snapshot, now)
+
+    assert supply.capacity_raw == 100
+    assert supply.level_raw == 18
+    assert supply.alert_status == SupplyAlert.WARNING.value
+
+
 def test_marks_no_communication_only_after_three_failures_and_recovers() -> None:
     printer = Printer(
         id="printer-1",
@@ -104,3 +125,19 @@ def test_records_reading_on_change_or_after_daily_heartbeat() -> None:
     assert should_record_reading(previous, 50, SupplyAlert.WARNING, now) is True
     previous.recorded_at = now - timedelta(hours=24)
     assert should_record_reading(previous, 50, SupplyAlert.NORMAL, now) is True
+
+
+def test_retention_skips_deletes_when_another_worker_holds_the_lock() -> None:
+    db = AsyncMock()
+    db.scalar.return_value = False
+
+    asyncio.run(
+        purge_expired_operational_data(
+            db,
+            datetime(2026, 8, 27, 12, 0, tzinfo=timezone.utc),
+        )
+    )
+
+    db.execute.assert_not_awaited()
+    db.commit.assert_not_awaited()
+    db.rollback.assert_awaited_once()

@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Any
 
-from sqlalchemy import delete, or_, select
+from sqlalchemy import delete, or_, select, text
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -179,6 +179,24 @@ def should_record_reading(
     return previous.recorded_at <= now - timedelta(hours=24)
 
 
+def _new_supply(printer_id: str, snapshot: SupplySnapshot, now: datetime) -> PrinterSupply:
+    return PrinterSupply(
+        printer_id=printer_id,
+        snmp_index=snapshot.snmp_index,
+        description_raw=snapshot.description_raw,
+        type_raw=snapshot.type_raw,
+        normalized_type=snapshot.normalized_type.value,
+        color=snapshot.color.value,
+        capacity_raw=snapshot.capacity_raw,
+        level_raw=snapshot.level_raw,
+        capacity_unit_raw=snapshot.capacity_unit_raw,
+        level_percent=snapshot.level_percent,
+        alert_status=snapshot.alert_status.value,
+        first_seen_at=now,
+        last_seen_at=now,
+    )
+
+
 def _first_int(rows: list[tuple[str, Any]]) -> int | None:
     return _as_int(rows[0][1]) if rows else None
 
@@ -207,11 +225,7 @@ async def _persist_supplies(
         observed.add(snapshot.snmp_index)
         supply = existing.get(snapshot.snmp_index)
         if supply is None:
-            supply = PrinterSupply(
-                printer_id=printer.id,
-                snmp_index=snapshot.snmp_index,
-                first_seen_at=now,
-            )
+            supply = _new_supply(printer.id, snapshot, now)
             db.add(supply)
             await db.flush()
         previous = (
@@ -339,6 +353,14 @@ async def poll_due_printers(
 
 
 async def purge_expired_operational_data(db: AsyncSession, now: datetime) -> None:
+    lock_acquired = await db.scalar(
+        text("SELECT pg_try_advisory_xact_lock(:lock_key)"),
+        {"lock_key": 0x4455504C494341},
+    )
+    if not lock_acquired:
+        await db.rollback()
+        return
+
     await db.execute(delete(DiscoveryEvent).where(DiscoveryEvent.created_at < now - timedelta(days=90)))
     await db.execute(delete(SupplyReading).where(SupplyReading.recorded_at < now - timedelta(days=365)))
     await db.commit()
