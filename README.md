@@ -144,6 +144,14 @@ Login aceita usuário ou e-mail, no mesmo campo.
 | Operador | `operador` | `operador123` |
 | Consulta | `consulta` | `consulta123` |
 
+## Duplica Pro
+
+Este repositório é a edição **Community** do Duplica (MIT, uso livre inclusive comercial). Uma
+edição **Pro**, com módulos adicionais (Parque de Impressão, bilhetagem por custo/local, entre
+outros), é distribuída por contrato através dos Serviços da Darckware — inclui instalação,
+suporte e atualizações contínuas. Não é um fork público; o código do Pro não fica neste
+repositório.
+
 ## Licença
 
 [MIT](LICENSE) — código aberto: pode ser usado, modificado e redistribuído, inclusive
