@@ -123,3 +123,13 @@ Passos, em ordem (cada um só começa depois do anterior estar confirmado):
   final sobre o texto; não faz parte deste documento.
 - Bilhetagem (segunda feature Pro) — desenho próprio quando a implementação começar; aqui só
   entra como exemplo do "módulo novo nasce em `duplica-pro`" (regra 3).
+
+## Execução
+
+Migração concluída em 2026-08-29:
+- `duplica-pro` criado como privado; `pro/main` contém a base Community + os 10 commits de
+  Parque de Impressão + o commit de refinamentos `[Pro]`.
+- `duplica` público republicado a partir de um branch limpo (`community-wip` → `main`), sem
+  nenhum commit ou arquivo de Parque de Impressão.
+- Branch antigo preservado localmente como `main-pro-backup-20260829` (não publicado) até
+  confirmação final de que `duplica-pro` está correto.
