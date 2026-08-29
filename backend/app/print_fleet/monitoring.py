@@ -264,7 +264,7 @@ async def _persist_supplies(
             supply.missing_poll_count += 1
 
 
-async def _poll_printer(
+async def poll_printer(
     db: AsyncSession,
     printer: Printer,
     transport: SnmpTransport,
@@ -344,7 +344,7 @@ async def poll_due_printers(
     printers = list(result.scalars().all())
     succeeded = 0
     for printer in printers:
-        succeeded += int(await _poll_printer(db, printer, transport, polled_at))
+        succeeded += int(await poll_printer(db, printer, transport, polled_at))
     return PollSummary(
         attempted=len(printers),
         succeeded=succeeded,

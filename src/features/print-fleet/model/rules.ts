@@ -1,4 +1,31 @@
-import { SupplyAlert } from "./types";
+import { Unit } from "../../units/model/types";
+import { OnboardingStatus, OperationalStatus, Printer, SupplyAlert } from "./types";
+
+export const STATUS_LABELS: Record<OperationalStatus, string> = { online: "Online", warning: "Com alerta", offline: "Offline", unknown: "Sem leitura" };
+export const ONBOARDING_LABELS: Record<OnboardingStatus, string> = { pending: "Pendente", confirmed: "Confirmada", ignored: "Ignorada", conflict: "Conflito" };
+
+export function printerDisplayName(printer: Pick<Printer, "displayName" | "sysName" | "managementAddress">): string {
+  return printer.displayName ?? printer.sysName ?? printer.managementAddress;
+}
+
+// Colunas da tabela de Impressoras pelas quais dá pra ordenar (clicando no
+// título da coluna) — mesmo padrão do SortableHeader usado em Solicitações e
+// Auditoria. "unit"/status ordenam pelo rótulo visível (pt-BR), não pela
+// chave interna, pra bater com o que a pessoa vê na tela.
+export const printerSortKeys = ["name", "unit", "operationalStatus", "onboardingStatus"] as const;
+export type PrinterSortKey = (typeof printerSortKeys)[number];
+export type SortDirection = "asc" | "desc";
+
+export function sortPrinters(printers: Printer[], units: Unit[], key: PrinterSortKey, direction: SortDirection): Printer[] {
+  function value(printer: Printer): string {
+    if (key === "name") return printerDisplayName(printer);
+    if (key === "unit") return units.find((u) => u.id === printer.unitId)?.name ?? "Setor não definido";
+    if (key === "operationalStatus") return STATUS_LABELS[printer.operationalStatus];
+    return ONBOARDING_LABELS[printer.onboardingStatus];
+  }
+  const sorted = [...printers].sort((a, b) => value(a).localeCompare(value(b), "pt-BR"));
+  return direction === "asc" ? sorted : sorted.reverse();
+}
 
 export function discoveryProgress(run: { scannedTargets: number; totalTargets: number }): number {
   if (run.totalTargets <= 0) return 0;

@@ -25,7 +25,7 @@ test("cadastra rede, descobre HP simulada e vincula insumos ao setor", async ({ 
 
   await page.getByRole("tab", { name: "Impressoras" }).click();
   await expect(page.getByText("HP Sede E2E")).toBeVisible({ timeout: 10_000 });
-  await page.getByRole("button", { name: "Revisar" }).click();
+  await page.getByRole("button", { name: "Editar HP Sede E2E" }).click();
   await page.getByLabel("Nome").fill("HP Pedagógico");
   await page.getByRole("combobox", { name: "Setor" }).click();
   await page.getByRole("option", { name: "Sede - Coordenação Pedagógica" }).click();
@@ -34,10 +34,11 @@ test("cadastra rede, descobre HP simulada e vincula insumos ao setor", async ({ 
 
   await page.getByRole("switch", { name: "Ativar monitoramento de HP Pedagógico" }).click();
   await expect(page.getByRole("switch", { name: "Desativar monitoramento de HP Pedagógico" })).toBeVisible();
+  const detailsToggle = page.getByRole("button", { name: /(Ver|Fechar) detalhes de HP Pedagógico/ });
   await expect.poll(async () => {
-    await page.getByRole("button", { name: "Ver detalhes de HP Pedagógico" }).click();
+    await detailsToggle.click();
     const count = await page.getByText("18% — Atenção").count();
-    if (!count) await page.getByRole("button", { name: "Ver detalhes de HP Pedagógico" }).click();
+    if (!count) await detailsToggle.click();
     return count;
   }, { timeout: 20_000 }).toBeGreaterThan(0);
 });

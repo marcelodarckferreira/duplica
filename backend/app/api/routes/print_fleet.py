@@ -164,6 +164,15 @@ async def set_monitoring(
     return await service.set_monitoring(db, printer_id, payload.enabled, user)
 
 
+@router.post("/printers/{printer_id}/poll", response_model=PrinterOut)
+async def poll_printer(
+    printer_id: str,
+    db: AsyncSession = Depends(get_db),
+    user: User = Depends(require_permission("managePrintFleet")),
+):
+    return await service.poll_printer_now(db, printer_id, user)
+
+
 @router.get(
     "/printers/{printer_id}/supplies",
     response_model=list[PrinterSupplyOut],

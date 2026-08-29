@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from ipaddress import ip_address, ip_network
 
 from fastapi import HTTPException, status
@@ -16,7 +17,9 @@ from app.db.models.print_fleet import (
 from app.db.models.unit import Unit
 from app.db.models.user import User
 from app.print_fleet.credentials import SnmpCredentialCipher
+from app.print_fleet.monitoring import poll_printer
 from app.print_fleet.networking import normalize_network
+from app.print_fleet.snmp import create_transport
 from app.print_fleet.types import DiscoveryRunStatus, OnboardingStatus, OperationalStatus
 from app.schemas.print_fleet import (
     DiscoveryNetworkCreate,
@@ -319,6 +322,8 @@ async def confirm_printer(
     ensure_headquarters_unit(await db.get(Unit, payload.unit_id))
     printer.display_name = payload.display_name.strip()
     printer.unit_id = payload.unit_id
+    printer.manufacturer = payload.manufacturer
+    printer.model = payload.model
     printer.onboarding_status = OnboardingStatus.CONFIRMED.value
     printer.monitoring_enabled = True
     record_resource_audit(db, "confirm", "printer", printer.id, actor, f"Impressora vinculada ao setor {payload.unit_id}.")
@@ -346,6 +351,21 @@ async def set_monitoring(db: AsyncSession, printer_id: str, enabled: bool, actor
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Confirme a impressora antes de monitorá-la.")
     printer.monitoring_enabled = enabled
     record_resource_audit(db, "update", "printer", printer.id, actor, f"Monitoramento {'ativado' if enabled else 'suspenso'}.")
+    await db.commit()
+    await db.refresh(printer)
+    return printer
+
+
+async def poll_printer_now(db: AsyncSession, printer_id: str, actor: User) -> Printer:
+    printer = await _get_printer(db, printer_id)
+    transport = create_transport(settings.PRINT_FLEET_SNMP_TRANSPORT)
+    try:
+        succeeded = await poll_printer(db, printer, transport, datetime.now(timezone.utc))
+    finally:
+        await transport.aclose()
+    if not succeeded:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail="A impressora não respondeu à leitura SNMP.")
+    record_resource_audit(db, "update", "printer", printer.id, actor, "Leitura SNMP forçada manualmente.")
     await db.commit()
     await db.refresh(printer)
     return printer

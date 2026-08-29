@@ -127,6 +127,8 @@ class PrinterUpdate(BaseModel):
 class PrinterConfirm(BaseModel):
     display_name: str = Field(min_length=1, max_length=180)
     unit_id: str = Field(min_length=1, max_length=64)
+    manufacturer: str | None = Field(default=None, max_length=120)
+    model: str | None = Field(default=None, max_length=180)
 
 
 class MonitoringUpdate(BaseModel):

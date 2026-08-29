@@ -224,3 +224,11 @@ def parse_detected_error_state(raw: bytes) -> list[str]:
         if byte_index < len(raw) and raw[byte_index] & (1 << (7 - offset)):
             detected.append(label)
     return detected
+
+
+def create_transport(name: str) -> SnmpTransport:
+    if name == "simulated":
+        return SimulatedSnmpTransport()
+    if name != "pysnmp":
+        raise ValueError("PRINT_FLEET_SNMP_TRANSPORT deve ser 'pysnmp' ou 'simulated'.")
+    return PysnmpTransport()

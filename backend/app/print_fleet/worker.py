@@ -5,17 +5,9 @@ from collections.abc import Awaitable, Callable
 
 from app.core.config import settings
 from app.print_fleet.monitoring import PrintFleetWorkerCycle
-from app.print_fleet.snmp import PysnmpTransport, SimulatedSnmpTransport, SnmpTransport
+from app.print_fleet.snmp import create_transport
 
 WorkerCycle = Callable[[], Awaitable[bool]]
-
-
-def create_transport(name: str) -> SnmpTransport:
-    if name == "simulated":
-        return SimulatedSnmpTransport()
-    if name != "pysnmp":
-        raise ValueError("PRINT_FLEET_SNMP_TRANSPORT deve ser 'pysnmp' ou 'simulated'.")
-    return PysnmpTransport()
 
 
 async def run_worker(

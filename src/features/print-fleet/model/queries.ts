@@ -29,9 +29,10 @@ export const useUpdateNetworkMutation = () => useInvalidateFleetMutation(({ id, 
 export const useSetNetworkActiveMutation = () => useInvalidateFleetMutation(({ id, active }: { id: string; active: boolean }) => repo.setNetworkActive(id, active));
 export const useStartDiscoveryMutation = () => useInvalidateFleetMutation((id: string) => repo.startDiscovery(id));
 export const useCreatePrinterMutation = () => useInvalidateFleetMutation((draft: ManualPrinterDraft) => repo.createPrinter(draft));
-export const useConfirmPrinterMutation = () => useInvalidateFleetMutation(({ id, displayName, unitId }: { id: string; displayName: string; unitId: string }) => repo.confirmPrinter(id, displayName, unitId));
+export const useConfirmPrinterMutation = () => useInvalidateFleetMutation(({ id, displayName, unitId, manufacturer, model }: { id: string; displayName: string; unitId: string; manufacturer: string; model: string }) => repo.confirmPrinter(id, displayName, unitId, manufacturer, model));
 export const useSetOnboardingMutation = () => useInvalidateFleetMutation(({ id, action }: { id: string; action: "ignore" | "reopen" }) => repo.setOnboarding(id, action));
 export const useSetMonitoringMutation = () => useInvalidateFleetMutation(({ id, enabled }: { id: string; enabled: boolean }) => repo.setMonitoring(id, enabled));
+export const usePollPrinterMutation = () => useInvalidateFleetMutation((id: string) => repo.pollPrinter(id));
 
 export function usePrinterSuppliesQuery(printerId: string | null) {
   return useQuery({ queryKey: printFleetKeys.supplies(printerId ?? "none"), queryFn: () => repo.getSupplies(printerId!), enabled: Boolean(printerId) });
