@@ -22,7 +22,7 @@ describe("users repository", () => {
         JSON.stringify({
           access_token: "fake-jwt",
           token_type: "bearer",
-          user: { id: "admin", name: "Administrador SEMED", role: "Admin", email: "admin@grafica.local", active: true },
+          user: { id: "admin", name: "Administrador", role: "Admin", email: "admin@grafica.local", active: true },
         }),
         { status: 200 },
       ),
@@ -130,12 +130,12 @@ describe("users repository", () => {
   });
 
   it("changes the own password via PATCH /auth/me sending current and new password", async () => {
-    const saved = { id: "admin", username: "admin", name: "Administrador SEMED", role: "Admin", email: "admin@grafica.local", active: true };
+    const saved = { id: "admin", username: "admin", name: "Administrador", role: "Admin", email: "admin@grafica.local", active: true };
     fetchMock.mockResolvedValueOnce(new Response(JSON.stringify(saved), { status: 200 }));
 
     const repo = createUsersRepository();
     await repo.changePassword({
-      name: "Administrador SEMED",
+      name: "Administrador",
       email: "admin@grafica.local",
       currentPassword: "admin123",
       newPassword: "nova-senha-456",

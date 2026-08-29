@@ -1,5 +1,6 @@
 # Duplica
 
+![License](https://img.shields.io/badge/license-MIT-green)
 ![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178C6?logo=typescript&logoColor=white)
 ![FastAPI](https://img.shields.io/badge/FastAPI-Python-009688?logo=fastapi&logoColor=white)
@@ -15,24 +16,27 @@ Frontend em React 19 + TypeScript, backend próprio em Python/FastAPI + PostgreS
 
 **Solicitações**
 - Ciclo de vida completo por status (Recebido → Em produção → Pronto → Entregue, ou Cancelado), com histórico auditável por fase e validação de ordem no backend.
-- Cálculo automático de faces impressas e folhas consumidas (considera frente/frente-e-verso), código único gerado no servidor, prioridade (Normal/Urgente/Institucional) e especificação completa de impressão (papel, grampo, layout, cor).
-- Confirmação de entrega com **assinatura digital** — captura num canvas (sem dependência externa), armazenada junto do nome de quem retirou.
+- Cálculo automático de faces impressas e folhas consumidas — exibidas junto da estimativa de resmas (considera frente/frente-e-verso) — código único gerado no servidor, prioridade (Normal/Urgente/Institucional) e especificação completa de impressão (papel, grampo, layout, cor).
+- Tela de consulta separada da de inclusão/edição (mesmo formulário, tela cheia), com tabela de colunas ordenáveis, filtro por período/texto e botão de limpar filtros.
+- Confirmação de entrega em fluxo de tela cheia (não mais modal, para não perder os botões atrás do teclado virtual em telas pequenas), com resumo da solicitação, **assinatura digital** — captura num canvas, sem dependência externa — e nome de quem retirou.
 - Compartilhamento de status via **WhatsApp**: um clique abre uma conversa com o solicitante já com a mensagem de status preenchida, assinada com o nome de quem está enviando (número institucional compartilhado por vários operadores).
 - Relatórios prontos para impressão/PDF (impressão nativa do navegador, sem biblioteca de PDF).
 
 **Dashboard e relatórios**
 - Métricas separadas de faces impressas vs. folhas de papel consumidas vs. resmas estimadas.
 - Ranking de locais por consumo de papel e por faces impressas, consolidação mensal, últimas solicitações.
+- Botão "Sincronizar" para atualização manual dos dados e alternância de atualização automática (a cada 30s), disponível no menu de conta.
 
 **Cadastros**
 - Locais (escolas e setores), com código gerado no servidor, ativação/desativação e exclusão protegida quando já há solicitações vinculadas.
-- Pessoas (solicitantes) por local, com matrícula e telefone.
-- Usuários com upload de foto de perfil.
-- **Perfis de acesso configuráveis** — permissões por papel (Admin/Gerente/Operador/Consulta) editáveis em tela, não fixas em código.
+- Pessoas (solicitantes) por local, com matrícula e telefone, sob permissão própria (`managePeople`, dissociada da gestão de locais).
+- Usuários com upload de foto de perfil (com fallback para iniciais caso a imagem falhe ao carregar).
+- **Perfis de acesso configuráveis** — permissões por papel (Admin/Gerente/Operador/Consulta) editáveis em tela, não fixas em código; o perfil Admin é protegido e não pode ser alterado por ninguém, nem por outro Admin.
 
 **Plataforma**
-- Autenticação JWT (bcrypt), rate limiting no login, sessão persistente ("permanecer conectado").
-- Log de auditoria de toda mutação em solicitações, com expurgo automático após 60 dias.
+- Autenticação JWT (bcrypt) com login por usuário ou e-mail, rate limiting no login, sessão persistente ("permanecer conectado").
+- Log de auditoria de toda mutação em solicitações, com filtros (ação, período, busca), colunas ordenáveis e expurgo automático após 60 dias.
+- Painel "Sobre" autenticado, com versão da aplicação, revisão Git e revisão do banco (Alembic) aplicada em tempo de execução.
 - Tema claro/escuro/sistema.
 
 ## Stack
@@ -114,12 +118,17 @@ Builda uma imagem Docker única (frontend estático servido pelo próprio backen
 ## Testes
 
 ```bash
-npm test         # Vitest — API mockada, não precisa do backend rodando
+npm test         # Vitest (jsdom + Storybook/Chromium) — API mockada, não precisa do backend rodando
 npm run build    # typecheck (tsc --noEmit) + build de produção
 npm run test:e2e # Playwright, contra um Postgres/backend isolados (porta própria)
+npm run storybook # catálogo de componentes de src/shared/ui/ (porta 6006)
 ```
 
-O backend ainda não tem suíte automatizada própria (`pytest`); validação de rota hoje é manual.
+```bash
+cd backend && PYTHONPATH=. .venv/bin/pytest   # cobertura pytest ainda mínima (rota de versão do sistema)
+```
+
+O backend não tem suíte `pytest` abrangente ainda (só `backend/tests/test_system_version.py`); a validação das demais rotas segue manual, via `curl` (ver `docs/SPEC.md` §13).
 
 ## Credenciais de demonstração
 
@@ -130,10 +139,12 @@ Login aceita usuário ou e-mail, no mesmo campo.
 | Perfil | Usuário | Senha |
 |---|---|---|
 | Administrador | `admin` | `admin123` |
+| Administrador | `ti` | `ti12345` |
 | Gerente | `gerente` | `gerente123` |
 | Operador | `operador` | `operador123` |
 | Consulta | `consulta` | `consulta123` |
 
 ## Licença
 
-Uso interno.
+[MIT](LICENSE) — código aberto: pode ser usado, modificado e redistribuído, inclusive
+comercialmente, mantendo o aviso de copyright.

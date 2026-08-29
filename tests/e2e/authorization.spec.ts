@@ -41,7 +41,7 @@ test.describe("Autorização — Gerente (autoproteção de conta)", () => {
     await page.getByRole("button", { name: "Usuários" }).click();
     await page.getByRole("heading", { name: "Usuários e perfis" }).first().waitFor();
 
-    const systemRow = page.locator("table tbody tr", { hasText: "Administrador SEMED" });
+    const systemRow = page.locator("table tbody tr", { hasText: "Administrador" });
     await expect(systemRow.getByRole("button", { name: /excluir/i })).toHaveCount(0);
   });
 });
