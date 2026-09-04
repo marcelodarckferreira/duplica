@@ -8,7 +8,9 @@ export type Permission =
   | "manageUnits"
   | "managePeople"
   | "manageUsers"
-  | "manageAudit";
+  | "manageAudit"
+  | "viewPrintFleet"
+  | "managePrintFleet";
 
 export interface User {
   id: string;

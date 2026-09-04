@@ -55,6 +55,22 @@ services:
       timeout: 5s
       retries: 5
 
+  print_fleet_worker:
+    image: duplica:latest
+    container_name: duplica_print_fleet_worker
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+    command: ["python", "-m", "app.print_fleet.worker"]
+    volumes:
+      - uploads_data:/app/backend/uploads
+
 volumes:
   postgres_data:
     name: grafica_postgres_data

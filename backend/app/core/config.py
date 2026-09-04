@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     # localmente.
     ENABLE_DOCS: bool = False
 
+    SNMP_CREDENTIAL_ENCRYPTION_KEY: str | None = None
+    PRINT_FLEET_POLL_INTERVAL_SECONDS: int = 900
+    PRINT_FLEET_WORKER_IDLE_SECONDS: float = 2.0
+    PRINT_FLEET_SNMP_TRANSPORT: str = "pysnmp"
+
     @property
     def database_url(self) -> str:
         return (

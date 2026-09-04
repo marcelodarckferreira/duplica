@@ -15,6 +15,8 @@ const PERMISSION_LABELS: Record<Permission, string> = {
   managePeople: "Gerenciar pessoas",
   manageUsers: "Gerenciar usuários",
   manageAudit: "Gerenciar auditoria",
+  viewPrintFleet: "Consultar parque de impressão",
+  managePrintFleet: "Gerenciar parque de impressão",
 };
 
 const PERMISSIONS = Object.keys(PERMISSION_LABELS) as Permission[];

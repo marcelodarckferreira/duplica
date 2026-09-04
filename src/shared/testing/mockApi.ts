@@ -107,7 +107,7 @@ export function installMockApi(options: { systemVersionFailures?: number } = {})
     {
       id: "admin",
       username: "admin",
-      name: "Administrador SEMED",
+      name: "Administrador",
       role: "Admin",
       email: "admin@grafica.local",
       active: true,
@@ -220,7 +220,7 @@ export function installMockApi(options: { systemVersionFailures?: number } = {})
       request_id: "req-1",
       request_code: "CP-2026-0001",
       actor_id: "admin",
-      actor_name: "Administrador SEMED",
+      actor_name: "Administrador",
       detail: "Solicitação criada.",
       created_at: "2026-08-10T12:00:00Z",
     },
@@ -480,6 +480,14 @@ export function installMockApi(options: { systemVersionFailures?: number } = {})
       targetUser.avatar_url = `/uploads/avatars/${targetUser.id}-test.png`;
       const { password: _password, ...rest } = targetUser;
       return json(rest);
+    }
+
+    if (path === "/api/v1/print-fleet/networks" && method === "GET") return json([]);
+    if (path.startsWith("/api/v1/print-fleet/discoveries") && method === "GET") {
+      return json({ items: [], total: 0, page: 1, page_size: 25 });
+    }
+    if (path.startsWith("/api/v1/print-fleet/printers") && method === "GET") {
+      return json({ items: [], total: 0, page: 1, page_size: 100 });
     }
 
     return json({ detail: `Rota não mapeada no mock de teste: ${method} ${path}` }, 404);

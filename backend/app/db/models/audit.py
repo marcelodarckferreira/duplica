@@ -11,8 +11,10 @@ class AuditLog(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     action: Mapped[str] = mapped_column(String(32), nullable=False)  # create | update | delete | status_change
-    request_id: Mapped[str] = mapped_column(String(64), nullable=False)
-    request_code: Mapped[str] = mapped_column(String(32), nullable=False)
+    request_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    request_code: Mapped[str | None] = mapped_column(String(32), nullable=True)
+    resource_type: Mapped[str] = mapped_column(String(64), nullable=False, default="copy_request")
+    resource_id: Mapped[str] = mapped_column(String(64), nullable=False)
     actor_id: Mapped[str] = mapped_column(String(64), nullable=False)
     actor_name: Mapped[str] = mapped_column(String(255), nullable=False)
     detail: Mapped[str] = mapped_column(String(500), nullable=False, default="")

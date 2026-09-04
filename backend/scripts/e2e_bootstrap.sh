@@ -30,6 +30,9 @@ docker exec duplica_postgres psql -U app -d postgres -v ON_ERROR_STOP=1 -c "CREA
 
 export POSTGRES_DB="$TEST_DB"
 export CORS_ORIGINS="http://127.0.0.1:5174"
+export SNMP_CREDENTIAL_ENCRYPTION_KEY="duplica-e2e-isolated-key-not-for-production"
+export PRINT_FLEET_SNMP_TRANSPORT="simulated"
+export PRINT_FLEET_WORKER_IDLE_SECONDS="0.05"
 
 echo "-> aplicando migrations em '$TEST_DB'..."
 .venv/bin/alembic upgrade head
@@ -38,4 +41,8 @@ echo "-> semeando dados de demonstração em '$TEST_DB'..."
 .venv/bin/python -m app.db.seed
 
 echo "-> subindo backend de teste na porta 8011..."
-exec .venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8011
+echo "-> subindo worker SNMP simulado (somente E2E)..."
+.venv/bin/python -m app.print_fleet.worker &
+FLEET_WORKER_PID=$!
+trap 'kill "$FLEET_WORKER_PID" 2>/dev/null || true' EXIT
+.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8011

@@ -58,6 +58,7 @@ import { AuditAction, AuditLogEntry } from "../features/audit/model/types";
 import { AuditSortKey, filterAuditEntries, sortAuditEntries, SortDirection as AuditSortDirection } from "../features/audit/model/rules";
 import { AuditView } from "../features/audit/ui/AuditView";
 import { useAuditQuery, useClearAuditMutation } from "../features/audit/model/queries";
+import { PrintFleetView } from "../features/print-fleet/ui/PrintFleetView";
 
 // Autenticação continua fora do TanStack Query — login/sessão não é "estado
 // do servidor" cacheável do mesmo jeito que listas de domínio, e usersRepo
@@ -156,9 +157,14 @@ export function AppShell() {
   const updateRolePermissionsMutation = useUpdateRolePermissionsMutation();
 
   const canManageAudit = Boolean(user && canPerform(user.role, "manageAudit"));
+  const canViewPrintFleet = Boolean(user && (canPerform(user.role, "viewPrintFleet") || canPerform(user.role, "managePrintFleet")));
   const auditQuery = useAuditQuery(activeView === "audit" && canManageAudit);
   const auditEntries: AuditLogEntry[] = auditQuery.data ?? [];
   const clearAuditMutation = useClearAuditMutation();
+
+  useEffect(() => {
+    if (activeView === "printFleet" && !canViewPrintFleet) setActiveView("dashboard");
+  }, [activeView, canViewPrintFleet]);
 
   const filteredAuditEntries = useMemo(
     () =>
@@ -604,6 +610,7 @@ export function AppShell() {
         onChangeView={setActiveView}
         canManageUsers={canPerform(user.role, "manageUsers")}
         canManageAudit={canManageAudit}
+        canViewPrintFleet={canViewPrintFleet}
         user={user}
         theme={theme}
         onChangeTheme={setTheme}
@@ -622,7 +629,7 @@ export function AppShell() {
         <header className="mb-[22px] flex flex-col items-start gap-4 print:hidden sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h1 className="m-1 mb-2 text-[clamp(1.6rem,3.2vw,2.4rem)] font-bold leading-none text-text">
-              {activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Locais" : activeView === "people" ? "Pessoas" : activeView === "users" ? "Usuários e perfis" : activeView === "profiles" ? "Perfis de acesso" : "Auditoria"}
+              {activeView === "dashboard" ? "Visão geral" : activeView === "requests" ? "Solicitações" : activeView === "units" ? "Locais" : activeView === "people" ? "Pessoas" : activeView === "printFleet" ? "Parque de impressão" : activeView === "users" ? "Usuários e perfis" : activeView === "profiles" ? "Perfis de acesso" : "Auditoria"}
             </h1>
           </div>
         </header>
@@ -747,6 +754,13 @@ export function AppShell() {
 
             {activeView === "profiles" && canPerform(user.role, "manageUsers") && (
               <AccessProfilesView currentUserRole={user.role} />
+            )}
+
+            {activeView === "printFleet" && canViewPrintFleet && (
+              <PrintFleetView
+                units={units.filter((unit) => unit.active && unit.origin === "SEDE")}
+                canManage={canPerform(user.role, "managePrintFleet")}
+              />
             )}
 
             {activeView === "audit" && canManageAudit && (

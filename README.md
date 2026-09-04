@@ -33,6 +33,11 @@ Frontend em React 19 + TypeScript, backend próprio em Python/FastAPI + PostgreS
 - Usuários com upload de foto de perfil (com fallback para iniciais caso a imagem falhe ao carregar).
 - **Perfis de acesso configuráveis** — permissões por papel (Admin/Gerente/Operador/Consulta) editáveis em tela, não fixas em código; o perfil Admin é protegido e não pode ser alterado por ninguém, nem por outro Admin.
 
+**Parque de impressão**
+- Descoberta de impressoras de rede via SNMP v2c (varredura por CIDR, com exclusões e limites de concorrência configuráveis) e cadastro manual para equipamentos que não respondem à descoberta.
+- Monitoramento contínuo de insumos (toner, tinta, cilindro, coletor, kits) via Printer-MIB, com alertas por limiar de nível e histórico de leituras.
+- Worker dedicado (`print_fleet_worker`), sem porta exposta, consumindo fila durável no PostgreSQL — não envia trabalhos de impressão, só descobre e monitora. Guia de implantação em `docs/PARQUE_IMPRESSAO_OPERACAO.md`.
+
 **Plataforma**
 - Autenticação JWT (bcrypt) com login por usuário ou e-mail, rate limiting no login, sessão persistente ("permanecer conectado").
 - Log de auditoria de toda mutação em solicitações, com filtros (ação, período, busca), colunas ordenáveis e expurgo automático após 60 dias.
@@ -143,14 +148,6 @@ Login aceita usuário ou e-mail, no mesmo campo.
 | Gerente | `gerente` | `gerente123` |
 | Operador | `operador` | `operador123` |
 | Consulta | `consulta` | `consulta123` |
-
-## Duplica Pro
-
-Este repositório é a edição **Community** do Duplica (MIT, uso livre inclusive comercial). Uma
-edição **Pro**, com módulos adicionais (Parque de Impressão, bilhetagem por custo/local, entre
-outros), é distribuída por contrato através dos Serviços da Darckware — inclui instalação,
-suporte e atualizações contínuas. Não é um fork público; o código do Pro não fica neste
-repositório.
 
 ## Licença
 

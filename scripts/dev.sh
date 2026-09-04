@@ -48,6 +48,16 @@ stop_dev() {
     echo "-> backend não está rodando"
   fi
 
+  if is_running "$DEV_DIR/print-fleet-worker.pid"; then
+    local worker_pid
+    worker_pid="$(cat "$DEV_DIR/print-fleet-worker.pid")"
+    echo "-> parando worker do parque (PID $worker_pid)..."
+    kill "$worker_pid" 2>/dev/null || true
+    rm -f "$DEV_DIR/print-fleet-worker.pid"
+  else
+    echo "-> worker do parque não está rodando"
+  fi
+
   if [ "$stop_db" = true ]; then
     echo "-> parando Postgres..."
     docker compose -p duplica stop postgres
@@ -70,6 +80,12 @@ status_dev() {
     echo "Backend:   rodando (PID $(cat "$DEV_DIR/backend.pid")) - http://127.0.0.1:8010"
   else
     echo "Backend:   parado"
+  fi
+
+  if is_running "$DEV_DIR/print-fleet-worker.pid"; then
+    echo "Worker:    rodando (PID $(cat "$DEV_DIR/print-fleet-worker.pid"))"
+  else
+    echo "Worker:    parado"
   fi
 
   if docker ps --filter "name=duplica_postgres" --filter "status=running" --format '{{.Names}}' | grep -q duplica_postgres; then
@@ -129,6 +145,16 @@ else
   disown
 fi
 
+if is_running "$DEV_DIR/print-fleet-worker.pid"; then
+  echo "-> worker do parque já rodando (PID $(cat "$DEV_DIR/print-fleet-worker.pid"))"
+else
+  echo "-> subindo worker do parque de impressão..."
+  ( cd backend && exec .venv/bin/python -m app.print_fleet.worker ) \
+    > "$DEV_DIR/print-fleet-worker.log" 2>&1 &
+  echo $! > "$DEV_DIR/print-fleet-worker.pid"
+  disown
+fi
+
 if is_running "$DEV_DIR/frontend.pid"; then
   echo "-> frontend já rodando (PID $(cat "$DEV_DIR/frontend.pid"))"
 else
@@ -146,4 +172,4 @@ echo
 echo "== Duplica em modo dev =="
 echo "Frontend (HMR): http://127.0.0.1:5173"
 echo "Backend:        http://127.0.0.1:8010"
-echo "Logs: $DEV_DIR/backend.log , $DEV_DIR/frontend.log"
+echo "Logs: $DEV_DIR/backend.log , $DEV_DIR/frontend.log , $DEV_DIR/print-fleet-worker.log"

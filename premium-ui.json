@@ -1,0 +1,10 @@
+{
+  "profile": "product-admin",
+  "canonicalMap": "UX-CONTRACT.md",
+  "sourceRoots": ["src/features/print-fleet"],
+  "requiredCapabilities": ["Select/Listbox", "Form", "Scrollbar", "CRUD"],
+  "ownership": {
+    "Select/Listbox": "native",
+    "Date": "native"
+  }
+}

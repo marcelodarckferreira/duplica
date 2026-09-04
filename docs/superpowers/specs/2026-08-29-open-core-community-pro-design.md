@@ -123,7 +123,6 @@ Passos, em ordem (cada um só começa depois do anterior estar confirmado):
   final sobre o texto; não faz parte deste documento.
 - Bilhetagem (segunda feature Pro) — desenho próprio quando a implementação começar; aqui só
   entra como exemplo do "módulo novo nasce em `duplica-pro`" (regra 3).
-
 ## Execução
 
 Migração concluída em 2026-08-29:
@@ -133,3 +132,19 @@ Migração concluída em 2026-08-29:
   nenhum commit ou arquivo de Parque de Impressão.
 - Branch antigo preservado localmente como `main-pro-backup-20260829` (não publicado) até
   confirmação final de que `duplica-pro` está correto.
+
+## Reversão (2026-09-04)
+
+Decisão de negócio de Marcelo: o modelo Pro pago é descontinuado. O Duplica volta a ser um
+projeto único, 100% open source (MIT), sem edição paga separada — a estratégia comercial passa a
+ser usar projetos open source como atrativo/porta de entrada para os Serviços da Darckware (linha
+de "atrativos"), em vez de vender uma edição Pro à parte. Aplicações pagas ficam para depois, como
+uma frente nova, quando o site institucional e a forma de pagamento estiverem prontos — não são
+mais uma variante deste mesmo projeto.
+
+Como consequência: o Parque de Impressão (única feature Pro implementada até aqui) foi reintegrado
+ao `main` público, no mesmo commit que traz esta nota. `duplica-pro` (repositório privado) e o
+branch `main-pro-backup-20260829` continuam existindo como histórico, mas deixam de receber
+trabalho novo — toda manutenção do Parque de Impressão passa a acontecer só no `duplica` público,
+como qualquer outro módulo. Este documento (design + decisões §"Decisões já aprovadas") fica como
+registro histórico da tentativa; não é mais a política vigente.

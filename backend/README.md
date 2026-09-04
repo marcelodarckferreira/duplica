@@ -14,6 +14,8 @@ python3.11 -m venv .venv
 
 Requer o Postgres do `docker-compose.yml` (raiz do projeto) no ar e um `.env` (raiz do projeto) com `POSTGRES_PASSWORD` e `JWT_SECRET`.
 
+O parque de impressão também exige `SNMP_CREDENTIAL_ENCRYPTION_KEY`. Em desenvolvimento, o worker roda separadamente com `.venv/bin/python -m app.print_fleet.worker`; em produção, o Compose mantém o serviço `print_fleet_worker`. Consulte `docs/PARQUE_IMPRESSAO_OPERACAO.md` antes de autorizar uma descoberta.
+
 ## Nova migration
 
 Depois de alterar um model em `app/db/models/` (mudança de schema):

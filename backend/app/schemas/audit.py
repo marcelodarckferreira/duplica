@@ -8,8 +8,10 @@ class AuditLogOut(BaseModel):
 
     id: int
     action: str
-    request_id: str
-    request_code: str
+    request_id: str | None = None
+    request_code: str | None = None
+    resource_type: str
+    resource_id: str
     actor_id: str
     actor_name: str
     detail: str
